@@ -1,0 +1,268 @@
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Plus, Trash2, Check, Repeat, CreditCard, ChevronDown, FileText } from 'lucide-react';
+import { Category, Entry, isExpense, PAYMENT_TYPE_LABELS, PAYMENT_TYPES, PaymentType } from '@/lib/types';
+import { formatKr } from '@/lib/format';
+
+interface Props {
+  title: string;
+  hint: string;
+  accent: 'emerald' | 'sky' | 'amber' | 'violet';
+  icon: React.ReactNode;
+  category: Category;
+  month: string;
+  entries: Entry[];
+  total: number;
+  onAdd: (month: string, category: Category, name: string, amount: number) => Promise<void>;
+  onUpdate: (id: string, patch: Partial<Pick<Entry, 'name' | 'amount' | 'paid' | 'payment_type'>>) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+}
+
+const ACCENTS = {
+  emerald: { text: 'text-emerald-400', dot: 'bg-emerald-400', ring: 'focus:border-emerald-400/60' },
+  sky: { text: 'text-sky-400', dot: 'bg-sky-400', ring: 'focus:border-sky-400/60' },
+  amber: { text: 'text-amber-400', dot: 'bg-amber-400', ring: 'focus:border-amber-400/60' },
+  violet: { text: 'text-teal-300', dot: 'bg-teal-300', ring: 'focus:border-teal-300/60' },
+};
+
+export default function EntryList({
+  title, hint, accent, icon, category, month, entries, total,
+  onAdd, onUpdate, onDelete,
+}: Props) {
+  const a = ACCENTS[accent];
+  const [busy, setBusy] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+  const defaultName =
+    category === 'income' ? 'Ny inkomst' :
+    category === 'savings' ? 'Nytt sparande' : 'Ny kostnad';
+  const addLabel =
+    category === 'income' ? 'Lägg till inkomst' :
+    category === 'savings' ? 'Lägg till sparande' : 'Lägg till utgift';
+
+  const handleAdd = async (e?: FormEvent) => {
+    e?.preventDefault();
+    if (busy) return;
+    setAddError(null);
+    setBusy(true);
+    try {
+      await onAdd(month, category, defaultName, 0);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(message, err);
+      setAddError(message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="card relative z-[1] p-5 animate-fade-in">
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          <span className={`grid h-9 w-9 place-items-center rounded-xl bg-white/5 ${a.text}`}>
+            {icon}
+          </span>
+          <div>
+            <h3 className="font-display text-base font-semibold text-slate-100">{title}</h3>
+            <p className="text-xs text-slate-500">{hint}</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className={`stat-num text-lg ${a.text}`}>{formatKr(total)}</div>
+          <div className="text-[11px] text-slate-500">totalt</div>
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        {entries.length === 0 && (
+          <p className="py-3 text-center text-sm text-slate-500">Inga poster ännu.</p>
+        )}
+        {entries.map((e) => (
+          <Row key={e.id} entry={e} accentRing={a.ring} dot={a.dot}
+            onUpdate={onUpdate} onDelete={onDelete} />
+        ))}
+      </div>
+
+      <form onSubmit={handleAdd}>
+        <button
+          type="submit"
+          className="relative z-[1] mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/10 py-2.5 text-sm font-medium text-slate-400 transition hover:border-white/25 hover:text-slate-200"
+        >
+          <Plus className="h-4 w-4" /> {busy ? 'Lägger till…' : addLabel}
+        </button>
+      </form>
+      {addError && (
+        <p className="mt-2 text-center text-xs text-rose-300">{addError}</p>
+      )}
+    </section>
+  );
+}
+
+function Row({
+  entry, accentRing, dot, onUpdate, onDelete,
+}: {
+  entry: Entry;
+  accentRing: string;
+  dot: string;
+  onUpdate: Props['onUpdate'];
+  onDelete: Props['onDelete'];
+}) {
+  const [name, setName] = useState(entry.name);
+  const [amount, setAmount] = useState(String(entry.amount));
+  const focused = useRef(false);
+
+  useEffect(() => {
+    if (focused.current) return;
+    setName(entry.name);
+    setAmount(String(entry.amount));
+  }, [entry.id, entry.name, entry.amount]);
+
+  const commitName = () => {
+    const v = name.trim() || 'Namnlös';
+    if (v !== entry.name) {
+      void onUpdate(entry.id, { name: v }).catch((err) => {
+        console.error(err instanceof Error ? err.message : err, err);
+      });
+    }
+  };
+  const commitAmount = () => {
+    const v = Math.max(0, Math.round(Number(String(amount).replace(',', '.')) || 0));
+    if (v !== entry.amount) {
+      void onUpdate(entry.id, { amount: v }).catch((err) => {
+        console.error(err instanceof Error ? err.message : err, err);
+      });
+    }
+    setAmount(String(v));
+  };
+
+  const showType = isExpense(entry.category);
+
+  return (
+    <div className="group relative z-[1] flex items-center gap-2 rounded-xl px-2 py-1.5 transition hover:bg-white/5">
+      {showType && entry.paid && entry.payment_type === 'invoice' ? (
+        <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-emerald-950" title="Betald" aria-label="Betald">
+          <Check className="h-2.5 w-2.5" strokeWidth={3} />
+        </span>
+      ) : (
+        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+      )}
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onFocus={() => { focused.current = true; }}
+        onBlur={() => { focused.current = false; commitName(); }}
+        className={`relative z-[1] min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-slate-200 outline-none transition ${accentRing} focus:bg-black/20`}
+      />
+      {showType && (
+        <PaymentTypePicker
+          value={entry.payment_type}
+          onChange={(type) => {
+            void onUpdate(entry.id, { payment_type: type }).catch((err) => {
+              console.error(err instanceof Error ? err.message : err, err);
+            });
+          }}
+        />
+      )}
+      <div className="flex items-center gap-1">
+        <input
+          type="text"
+          inputMode="numeric"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          onFocus={() => { focused.current = true; }}
+          onBlur={() => { focused.current = false; commitAmount(); }}
+          className={`relative z-[1] w-24 rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-right text-sm tabular-nums text-slate-100 outline-none transition ${accentRing}`}
+        />
+        <span className="pointer-events-none text-xs text-slate-500">kr</span>
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          void onDelete(entry.id).catch((err) => {
+            console.error(err instanceof Error ? err.message : err, err);
+          });
+        }}
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-slate-600 opacity-0 transition hover:bg-rose-500/10 hover:text-rose-400 group-hover:opacity-100"
+        aria-label="Ta bort"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+const TYPE_STYLE: Record<PaymentType, { btn: string; icon: typeof FileText }> = {
+  invoice: { btn: 'bg-slate-100 text-slate-800 hover:bg-white', icon: FileText },
+  autogiro: { btn: 'bg-sky-100 text-sky-900 hover:bg-sky-50', icon: Repeat },
+  card_pot: { btn: 'bg-violet-100 text-violet-900 hover:bg-violet-50', icon: CreditCard },
+};
+
+function PaymentTypePicker({
+  value,
+  onChange,
+}: {
+  value: PaymentType;
+  onChange: (type: PaymentType) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const style = TYPE_STYLE[value];
+  const Icon = style.icon;
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  return (
+    <div ref={box} className="relative z-20 shrink-0">
+      <button
+        type="button"
+        aria-label="Betaltyp"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold transition ${style.btn}`}
+      >
+        <Icon className="h-3 w-3" />
+        {PAYMENT_TYPE_LABELS[value]}
+        <ChevronDown className={`h-3 w-3 opacity-70 transition ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute right-0 z-30 mt-1 min-w-[10.5rem] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl shadow-black/30"
+        >
+          {PAYMENT_TYPES.map((type) => {
+            const OptionIcon = TYPE_STYLE[type].icon;
+            const selected = type === value;
+            return (
+              <li key={type}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => {
+                    onChange(type);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm ${
+                    selected
+                      ? 'bg-emerald-50 font-semibold text-emerald-900'
+                      : 'text-slate-800 hover:bg-slate-100'
+                  }`}
+                >
+                  <OptionIcon className="h-4 w-4 shrink-0 opacity-80" />
+                  {PAYMENT_TYPE_LABELS[type]}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
