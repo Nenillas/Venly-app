@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { Check, CheckSquare, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Category, CATEGORY_LABELS, Entry } from '@/lib/types';
+import { useMemo, useState } from 'react';
+import { Check, CheckSquare, ChevronDown, ChevronLeft, ChevronRight, CreditCard, Repeat } from 'lucide-react';
+import { Category, CATEGORY_LABELS, Entry, PAYMENT_TYPE_LABELS } from '@/lib/types';
 import { formatKr, formatPercent, monthLabel, addMonths } from '@/lib/format';
 
 interface Props {
@@ -22,24 +22,38 @@ function paymentAmount(entry: Entry): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** Betalningar list: Faktura only, strictly positive amount. */
-export function isBetalningarItem(entry: Entry, month: string): boolean {
+function isPositiveCost(entry: Entry, month: string): boolean {
   return (
     entry.month === month &&
     COST_CATEGORIES.includes(entry.category) &&
-    entry.payment_type === 'invoice' &&
     paymentAmount(entry) > 0
   );
 }
 
+/** Main checklist: Faktura only, strictly positive amount. */
+export function isBetalningarItem(entry: Entry, month: string): boolean {
+  return isPositiveCost(entry, month) && entry.payment_type === 'invoice';
+}
+
 export default function PaymentsView({ month, onMonthChange, entries, onTogglePaid }: Props) {
-  const bills = useMemo(
-    () =>
-      entries
-        .filter((e) => isBetalningarItem(e, month))
-        .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name, 'sv')),
-    [entries, month],
-  );
+  const [otherOpen, setOtherOpen] = useState(false);
+
+  const { bills, autogiro, cards } = useMemo(() => {
+    const sortItems = (a: Entry, b: Entry) =>
+      a.category.localeCompare(b.category) || a.name.localeCompare(b.name, 'sv');
+    return {
+      bills: entries.filter((e) => isBetalningarItem(e, month)).sort(sortItems),
+      autogiro: entries
+        .filter((e) => isPositiveCost(e, month) && e.payment_type === 'autogiro')
+        .sort(sortItems),
+      cards: entries
+        .filter((e) => isPositiveCost(e, month) && e.payment_type === 'card_pot')
+        .sort(sortItems),
+    };
+  }, [entries, month]);
+
+  const otherCount = autogiro.length + cards.length;
+  const otherSum = [...autogiro, ...cards].reduce((a, e) => a + paymentAmount(e), 0);
 
   const paidCount = bills.filter((e) => e.paid).length;
   const total = bills.length;
@@ -82,7 +96,7 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
             </h2>
             <p className="mt-1 text-sm text-slate-400">
               {total === 0
-                ? 'Endast fakturor över 0 kr visas. Autogiro, kortköp och nollbelopp räknas inte med.'
+                ? 'Endast fakturor över 0 kr räknas i checklistan. Autogiro och kortköp ligger i en egen lista under.'
                 : <>Kvar att betala: <b className="text-slate-200">{formatKr(remaining)}</b></>}
             </p>
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/5">
@@ -107,6 +121,95 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
           ))}
         </ul>
       )}
+
+      {otherCount > 0 && (
+        <section className="card overflow-hidden animate-fade-in">
+          <button
+            type="button"
+            aria-expanded={otherOpen}
+            onClick={() => setOtherOpen((v) => !v)}
+            className="flex w-full items-center gap-3 p-5 text-left"
+          >
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300">
+              <Repeat className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-display font-semibold text-slate-100">
+                {otherOpen ? 'Dölj Autogiro & Kortköp' : 'Visa Autogiro & Kortköp'}
+              </h3>
+              <p className="text-xs text-slate-500">
+                {otherCount} {otherCount === 1 ? 'post' : 'poster'} · {formatKr(otherSum)} · ingår inte i checklistan
+              </p>
+            </div>
+            <ChevronDown className={`h-5 w-5 text-slate-500 transition ${otherOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {otherOpen && (
+            <div className="border-t border-white/5 px-3 pb-4 pt-2">
+              <OtherTypeList
+                title="Hanteras via Autogiro"
+                hint="dras automatiskt"
+                icon={<Repeat className="h-4 w-4" />}
+                items={autogiro}
+              />
+              <OtherTypeList
+                title="Kortköp"
+                hint="löpande kortutgifter"
+                icon={<CreditCard className="h-4 w-4" />}
+                items={cards}
+              />
+            </div>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
+
+function OtherTypeList({
+  title,
+  hint,
+  icon,
+  items,
+}: {
+  title: string;
+  hint: string;
+  icon: React.ReactNode;
+  items: Entry[];
+}) {
+  if (items.length === 0) return null;
+  const total = items.reduce((a, e) => a + paymentAmount(e), 0);
+
+  return (
+    <div className="mb-3 last:mb-0">
+      <div className="flex items-center gap-2 px-2 py-2">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/5 text-slate-400">
+          {icon}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h4 className="text-sm font-semibold text-slate-200">{title}</h4>
+          <p className="text-[11px] text-slate-500">
+            {items.length} {items.length === 1 ? 'post' : 'poster'} · {formatKr(total)} · {hint}
+          </p>
+        </div>
+      </div>
+      <ul className="space-y-1">
+        {items.map((item) => (
+          <li key={item.id} className="flex items-center gap-3 rounded-xl px-2 py-2.5">
+            <div className="min-w-0 flex-1">
+              <div className="font-medium text-slate-300">{item.name}</div>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${TAG[item.category as 'fixed' | 'variable']}`}>
+                  {CATEGORY_LABELS[item.category]}
+                </span>
+                <span className="inline-flex rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400 ring-1 ring-white/10">
+                  {PAYMENT_TYPE_LABELS[item.payment_type]}
+                </span>
+              </div>
+            </div>
+            <div className="stat-num shrink-0 text-sm text-slate-400">{formatKr(paymentAmount(item))}</div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
