@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { requireSupabase } from '@/lib/supabase/client';
 import { Category, Entry, MonthMeta, PaymentType } from '@/lib/types';
 import { logSupabaseError } from '@/lib/supabaseErrors';
 
@@ -21,11 +21,11 @@ export function getEntriesTable(): EntriesTable {
 
 /** PostgREST default schema is public — query tables by name only. */
 export function monthsQuery() {
-  return supabase.from('monthly_records');
+  return requireSupabase().from('monthly_records');
 }
 
 export function itemsQuery() {
-  return supabase.from('budget_items');
+  return requireSupabase().from('budget_items');
 }
 
 export async function queryUserRows(
@@ -33,7 +33,7 @@ export async function queryUserRows(
   userId: string,
   orderColumn?: string,
 ): Promise<{ table: string; data: Record<string, unknown>[] }> {
-  const from = () => supabase.from(table);
+  const from = () => requireSupabase().from(table);
   let { data, error } = orderColumn
     ? await from().select('*').eq('user_id', userId).order(orderColumn)
     : await from().select('*').eq('user_id', userId);

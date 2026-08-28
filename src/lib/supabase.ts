@@ -1,4 +1,4 @@
-export { createClient, supabase } from './supabase/client';
+export { createClient, supabase, isSupabaseConfigured, requireSupabase } from './supabase/client';
 export {
   getSession,
   getUser,

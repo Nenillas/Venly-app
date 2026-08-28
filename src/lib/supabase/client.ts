@@ -1,13 +1,17 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const url = import.meta.env.VITE_SUPABASE_URL;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const url = import.meta.env.VITE_SUPABASE_URL?.trim() ?? '';
+const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ?? '';
 
-if (!url || !anonKey) {
-  console.error('Saknar VITE_SUPABASE_URL eller VITE_SUPABASE_ANON_KEY i .env');
+export const isSupabaseConfigured = Boolean(url && anonKey);
+
+if (!isSupabaseConfigured) {
+  console.error(
+    'Saknar VITE_SUPABASE_URL eller VITE_SUPABASE_ANON_KEY. Sätt dem i Vercel och bygg om — appen startar inte mot Supabase utan dessa.',
+  );
 }
 
-type BrowserClient = ReturnType<typeof createSupabaseClient>;
+type BrowserClient = SupabaseClient;
 let browserClient: BrowserClient | null = null;
 
 function requestUrl(input: RequestInfo | URL): string {
@@ -16,12 +20,15 @@ function requestUrl(input: RequestInfo | URL): string {
   return input.url;
 }
 
-export function createClient() {
+export function createClient(): BrowserClient | null {
+  if (!isSupabaseConfigured) return null;
+
   browserClient = createSupabaseClient(url, anonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true,
+      // AuthCallback owns PKCE/OTP exchange once — auto-detect would consume the same one-time code.
+      detectSessionInUrl: false,
       flowType: 'pkce',
     },
     global: {
@@ -62,3 +69,14 @@ export function createClient() {
 
 /** Delad webbläsarklient — samma session (JWT) till Auth och PostgREST/RLS. */
 export const supabase = createClient();
+
+export function requireSupabase(): BrowserClient {
+  if (!supabase) {
+    const error = new Error(
+      'Supabase är inte konfigurerad. Sätt VITE_SUPABASE_URL och VITE_SUPABASE_ANON_KEY i Vercel och bygg om.',
+    );
+    console.error(error.message);
+    throw error;
+  }
+  return supabase;
+}

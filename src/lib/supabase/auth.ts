@@ -2,12 +2,17 @@ import { supabase } from './client';
 import { mapAuthError } from '@/lib/authErrors';
 import type { Session } from '@supabase/supabase-js';
 
+const notConfigured =
+  'Supabase är inte konfigurerad. Sätt VITE_SUPABASE_URL och VITE_SUPABASE_ANON_KEY i Vercel och bygg om.';
+
 export async function getSession() {
+  if (!supabase) return { session: null, error: new Error(notConfigured) };
   const { data, error } = await supabase.auth.getSession();
   return { session: data.session, error };
 }
 
 export async function getUser() {
+  if (!supabase) return { user: null, error: new Error(notConfigured) };
   const { data, error } = await supabase.auth.getUser();
   return { user: data.user, error };
 }
@@ -17,6 +22,12 @@ export const getCurrentUser = getUser;
 /** Väntar tills Auth har en session (onAuthStateChange), så redirect inte vinner racet. */
 export function waitForSession(timeoutMs = 8000): Promise<Session | null> {
   return new Promise((resolve) => {
+    if (!supabase) {
+      console.error(notConfigured);
+      resolve(null);
+      return;
+    }
+    const client = supabase;
     let settled = false;
     const finish = (session: Session | null) => {
       if (settled) return;
@@ -26,21 +37,25 @@ export function waitForSession(timeoutMs = 8000): Promise<Session | null> {
       resolve(session);
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
       if (session) finish(session);
     });
 
     const timer = setTimeout(() => {
-      void supabase.auth.getSession().then(({ data }) => finish(data.session));
+      void client.auth.getSession().then(({ data }) => finish(data.session));
     }, timeoutMs);
 
-    void supabase.auth.getSession().then(({ data }) => {
+    void client.auth.getSession().then(({ data }) => {
       if (data.session) finish(data.session);
     });
   });
 }
 
 export async function signInWithPassword(email: string, password: string) {
+  if (!supabase) {
+    console.error(notConfigured);
+    return { data: { user: null, session: null }, error: new Error(notConfigured), message: notConfigured };
+  }
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) console.error(error.message, error);
   const session = data.session ?? await waitForSession();
@@ -55,6 +70,10 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function signUpWithPassword(email: string, password: string) {
+  if (!supabase) {
+    console.error(notConfigured);
+    return { data: { user: null, session: null }, error: new Error(notConfigured), message: notConfigured };
+  }
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -74,6 +93,10 @@ export async function signUpWithPassword(email: string, password: string) {
 }
 
 export async function signInWithMagicLink(email: string) {
+  if (!supabase) {
+    console.error(notConfigured);
+    return { data: { user: null, session: null }, error: new Error(notConfigured), message: notConfigured };
+  }
   const { data, error } = await supabase.auth.signInWithOtp({
     email,
     options: {
@@ -89,5 +112,6 @@ export async function signInWithMagicLink(email: string) {
 }
 
 export async function signOut() {
+  if (!supabase) return { error: new Error(notConfigured) };
   return supabase.auth.signOut();
 }

@@ -9,6 +9,11 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!supabase) {
+      console.error('Saknar VITE_SUPABASE_URL eller VITE_SUPABASE_ANON_KEY');
+      setLoading(false);
+      return;
+    }
     const { data } = supabase.auth.onAuthStateChange((event, next) => {
       try {
         if (event === 'TOKEN_REFRESHED' && !next) return;
@@ -33,6 +38,7 @@ export function useAuth() {
   }, []);
 
   const signOut = useCallback(async () => {
+    if (!supabase) return;
     const { error } = await supabase.auth.signOut();
     if (error) logSupabaseError(error, 'signOut');
   }, []);
