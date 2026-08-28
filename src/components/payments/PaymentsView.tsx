@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Check, CheckSquare, ChevronDown, ChevronLeft, ChevronRight, CreditCard, Repeat } from 'lucide-react';
-import { Category, CATEGORY_LABELS, Entry, PAYMENT_TYPE_LABELS } from '@/lib/types';
+import { useMemo } from 'react';
+import { Check, CheckSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Category, CATEGORY_LABELS, Entry } from '@/lib/types';
 import { formatKr, formatPercent, monthLabel, addMonths } from '@/lib/format';
 
 interface Props {
@@ -10,31 +10,40 @@ interface Props {
   onTogglePaid: (id: string, paid: boolean) => Promise<void>;
 }
 
-const BILLS: Category[] = ['fixed', 'variable'];
+const COST_CATEGORIES: Category[] = ['fixed', 'variable'];
 
 const TAG = {
   fixed: 'bg-amber-400/10 text-amber-300 ring-amber-400/20',
   variable: 'bg-sky-400/10 text-sky-300 ring-sky-400/20',
 } as const;
 
-export default function PaymentsView({ month, onMonthChange, entries, onTogglePaid }: Props) {
-  const [autogiroOpen, setAutogiroOpen] = useState(true);
-  const [cardOpen, setCardOpen] = useState(true);
+function paymentAmount(entry: Entry): number {
+  const n = Number(entry.amount);
+  return Number.isFinite(n) ? n : 0;
+}
 
-  const { bills, autogiro, cards } = useMemo(() => {
-    const costs = entries
-      .filter((e) => e.month === month && BILLS.includes(e.category))
-      .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name, 'sv'));
-    return {
-      bills: costs.filter((e) => e.payment_type === 'invoice'),
-      autogiro: costs.filter((e) => e.payment_type === 'autogiro'),
-      cards: costs.filter((e) => e.payment_type === 'card_pot'),
-    };
-  }, [entries, month]);
+/** Betalningar list: Faktura only, strictly positive amount. */
+export function isBetalningarItem(entry: Entry, month: string): boolean {
+  return (
+    entry.month === month &&
+    COST_CATEGORIES.includes(entry.category) &&
+    entry.payment_type === 'invoice' &&
+    paymentAmount(entry) > 0
+  );
+}
+
+export default function PaymentsView({ month, onMonthChange, entries, onTogglePaid }: Props) {
+  const bills = useMemo(
+    () =>
+      entries
+        .filter((e) => isBetalningarItem(e, month))
+        .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name, 'sv')),
+    [entries, month],
+  );
 
   const paidCount = bills.filter((e) => e.paid).length;
   const total = bills.length;
-  const remaining = bills.filter((e) => !e.paid).reduce((a, e) => a + e.amount, 0);
+  const remaining = bills.filter((e) => !e.paid).reduce((a, e) => a + paymentAmount(e), 0);
   const pct = total === 0 ? 0 : Math.round((paidCount / total) * 100);
 
   return (
@@ -73,7 +82,7 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
             </h2>
             <p className="mt-1 text-sm text-slate-400">
               {total === 0
-                ? 'Endast poster med betaltyp Faktura visas här. Autogiro och kortköp räknas inte med.'
+                ? 'Endast fakturor över 0 kr visas. Autogiro, kortköp och nollbelopp räknas inte med.'
                 : <>Kvar att betala: <b className="text-slate-200">{formatKr(remaining)}</b></>}
             </p>
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/5">
@@ -89,7 +98,7 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
       {bills.length === 0 ? (
         <div className="card grid place-items-center p-12 text-center text-slate-500">
           <CheckSquare className="mb-3 h-10 w-10 opacity-40" />
-          <p>Inga fakturor att bocka av. Autogiro och kortköp visas nedan.</p>
+          <p>Inga fakturor över 0 kr att bocka av.</p>
         </div>
       ) : (
         <ul className="space-y-2">
@@ -98,75 +107,7 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
           ))}
         </ul>
       )}
-
-      <ExcludedGroup
-        title="Hanteras via Autogiro"
-        hint="dras automatiskt"
-        icon={<Repeat className="h-5 w-5" />}
-        items={autogiro}
-        open={autogiroOpen}
-        onToggle={() => setAutogiroOpen((v) => !v)}
-      />
-      <ExcludedGroup
-        title="Kortköp"
-        hint="löpande kortutgifter"
-        icon={<CreditCard className="h-5 w-5" />}
-        items={cards}
-        open={cardOpen}
-        onToggle={() => setCardOpen((v) => !v)}
-      />
     </div>
-  );
-}
-
-function ExcludedGroup({
-  title, hint, icon, items, open, onToggle,
-}: {
-  title: string;
-  hint: string;
-  icon: React.ReactNode;
-  items: Entry[];
-  open: boolean;
-  onToggle: () => void;
-}) {
-  if (items.length === 0) return null;
-  const total = items.reduce((a, e) => a + e.amount, 0);
-
-  return (
-    <section className="card overflow-hidden animate-fade-in">
-      <button type="button" onClick={onToggle} className="flex w-full items-center gap-3 p-5 text-left">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300">
-          {icon}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-display font-semibold text-slate-100">{title}</h3>
-          <p className="text-xs text-slate-500">
-            {items.length} {items.length === 1 ? 'post' : 'poster'} · {formatKr(total)} {hint}
-          </p>
-        </div>
-        <ChevronDown className={`h-5 w-5 text-slate-500 transition ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && (
-        <ul className="space-y-1 border-t border-white/5 px-3 pb-4 pt-2">
-          {items.map((item) => (
-            <li key={item.id} className="flex items-center gap-3 rounded-xl px-2 py-2.5">
-              <div className="min-w-0 flex-1">
-                <div className="font-medium text-slate-300">{item.name}</div>
-                <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                  <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${TAG[item.category as 'fixed' | 'variable']}`}>
-                    {CATEGORY_LABELS[item.category]}
-                  </span>
-                  <span className="inline-flex rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400 ring-1 ring-white/10">
-                    {PAYMENT_TYPE_LABELS[item.payment_type]}
-                  </span>
-                </div>
-              </div>
-              <div className="stat-num shrink-0 text-sm text-slate-400">{formatKr(item.amount)}</div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
   );
 }
 
@@ -207,7 +148,7 @@ function BillRow({
           </span>
         </div>
         <div className={`stat-num shrink-0 text-base ${paid ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
-          {formatKr(bill.amount)}
+          {formatKr(paymentAmount(bill))}
         </div>
       </button>
     </li>
