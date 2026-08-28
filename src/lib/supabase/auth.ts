@@ -1,5 +1,6 @@
 import { supabase } from './client';
 import { mapAuthError } from '@/lib/authErrors';
+import { passwordResetRedirectTo } from '@/lib/authRedirect';
 import type { Session } from '@supabase/supabase-js';
 
 const notConfigured =
@@ -114,4 +115,32 @@ export async function signInWithMagicLink(email: string) {
 export async function signOut() {
   if (!supabase) return { error: new Error(notConfigured) };
   return supabase.auth.signOut();
+}
+
+export async function requestPasswordReset(email: string) {
+  if (!supabase) {
+    console.error(notConfigured);
+    return { error: new Error(notConfigured), message: notConfigured };
+  }
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: passwordResetRedirectTo(),
+  });
+  if (error) {
+    console.error(error.message, error);
+    return { error, message: mapAuthError(error.message) };
+  }
+  return { error: null, message: null as string | null };
+}
+
+export async function updatePassword(password: string) {
+  if (!supabase) {
+    console.error(notConfigured);
+    return { error: new Error(notConfigured), message: notConfigured };
+  }
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    console.error(error.message, error);
+    return { error, message: mapAuthError(error.message) };
+  }
+  return { error: null, message: null as string | null };
 }

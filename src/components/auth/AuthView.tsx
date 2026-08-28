@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Mail, Lock, Loader2 } from 'lucide-react';
-import { signInWithMagicLink, signInWithPassword, signUpWithPassword } from '@/lib/supabase/auth';
+import { readLoginAuthError, readLoginAuthInfo } from '@/lib/authRedirect';
+import { requestPasswordReset, signInWithMagicLink, signInWithPassword, signUpWithPassword } from '@/lib/supabase/auth';
 import VenlyLogo from '@/components/VenlyLogo';
 
-type Mode = 'login' | 'signup';
+type Mode = 'login' | 'signup' | 'forgot';
 
 const EMAIL_KEY = 'venly.rememberedEmail';
 
@@ -27,9 +28,14 @@ export default function AuthView() {
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState(readSavedEmail);
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => readLoginAuthError());
+  const [info, setInfo] = useState<string | null>(() => readLoginAuthInfo());
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!readLoginAuthError() && !readLoginAuthInfo()) return;
+    window.history.replaceState({}, '', '/');
+  }, []);
 
   const submitPassword = async (e: FormEvent) => {
     e.preventDefault();
@@ -66,6 +72,28 @@ export default function AuthView() {
       const message = err instanceof Error ? err.message : String(err);
       console.error(message, err);
       setError(message || 'Inloggning misslyckades. Försök igen.');
+      setBusy(false);
+    }
+  };
+
+  const sendResetLink = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setInfo(null);
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setError('Ange din e-postadress så skickar vi en återställningslänk.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await requestPasswordReset(trimmed);
+      if (res.message) setError(res.message);
+      else {
+        rememberEmail(trimmed);
+        setInfo('Om kontot finns skickar vi en länk för att välja nytt lösenord.');
+      }
+    } finally {
       setBusy(false);
     }
   };
@@ -119,6 +147,53 @@ export default function AuthView() {
           ))}
         </div>
 
+        {mode === 'forgot' ? (
+          <>
+            <h2 className="font-display text-xl font-bold text-slate-50">Glömt lösenord?</h2>
+            <p className="mt-1 mb-5 text-sm text-slate-500">
+              Ange din e-postadress så skickar vi en länk för att välja ett nytt lösenord.
+            </p>
+            <form onSubmit={sendResetLink} className="space-y-3">
+              <label className="block" htmlFor="reset-email">
+                <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                  <Mail className="h-3.5 w-3.5" /> E-post
+                </span>
+                <input
+                  id="reset-email"
+                  type="email"
+                  autoComplete="username"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-ink-850 px-3 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-emerald-400/60"
+                  placeholder="du@epost.se"
+                  required
+                />
+              </label>
+              {error && (
+                <p className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-sm text-rose-300">{error}</p>
+              )}
+              {info && (
+                <p className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-300">{info}</p>
+              )}
+              <button
+                type="submit"
+                disabled={busy}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:opacity-60"
+              >
+                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                Skicka återställningslänk
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMode('login'); setError(null); setInfo(null); }}
+                className="w-full py-2 text-sm text-slate-400 transition hover:text-slate-200"
+              >
+                Tillbaka till inloggning
+              </button>
+            </form>
+          </>
+        ) : (
+          <>
         <h2 className="font-display text-xl font-bold text-slate-50">
           {mode === 'login' ? 'Välkommen tillbaka' : 'Kom igång'}
         </h2>
@@ -147,8 +222,19 @@ export default function AuthView() {
             />
           </label>
           <label className="block" htmlFor="auth-password">
-            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-400">
-              <Lock className="h-3.5 w-3.5" /> Lösenord
+            <span className="mb-1.5 flex items-center justify-between gap-1.5 text-xs font-medium text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5" /> Lösenord
+              </span>
+              {mode === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => { setMode('forgot'); setError(null); setInfo(null); }}
+                  className="font-medium text-emerald-400/90 transition hover:text-emerald-300"
+                >
+                  Glömt lösenord?
+                </button>
+              )}
             </span>
             <input
               id="auth-password"
@@ -196,6 +282,8 @@ export default function AuthView() {
           <Mail className="h-4 w-4 text-emerald-400" />
           Skicka magisk länk
         </button>
+          </>
+        )}
       </section>
     </div>
   );

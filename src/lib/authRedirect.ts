@@ -2,6 +2,42 @@ export function authCallbackUrl(): string {
   return `${window.location.origin}/auth/callback`;
 }
 
+export function loginUrl(authError?: string, authInfo?: string): string {
+  const params = new URLSearchParams();
+  if (authError) params.set('authError', authError);
+  if (authInfo) params.set('authInfo', authInfo);
+  const q = params.toString();
+  return q ? `/login?${q}` : '/login';
+}
+
+export function readLoginAuthError(): string | null {
+  try {
+    return new URLSearchParams(window.location.search).get('authError');
+  } catch {
+    return null;
+  }
+}
+
+export function readLoginAuthInfo(): string | null {
+  try {
+    return new URLSearchParams(window.location.search).get('authInfo');
+  } catch {
+    return null;
+  }
+}
+
+export function isResetPasswordLocation(href = window.location.href): boolean {
+  try {
+    return new URL(href).pathname.startsWith('/reset-password');
+  } catch {
+    return false;
+  }
+}
+
+export function passwordResetRedirectTo(): string {
+  return `${window.location.origin}/reset-password`;
+}
+
 export function getAuthCodeFromUrl(href = window.location.href): string | null {
   return new URL(href).searchParams.get('code');
 }
@@ -40,6 +76,8 @@ export function getAuthLinkError(href = window.location.href): string | null {
 
 export function isAuthCallbackLocation(href = window.location.href): boolean {
   const url = new URL(href);
+  if (url.pathname.startsWith('/reset-password')) return false;
+  if (url.pathname.startsWith('/login')) return false;
   if (url.pathname.startsWith('/auth/callback')) return true;
   if (url.searchParams.get('code')) return true;
   if (url.searchParams.get('token_hash')) return true;

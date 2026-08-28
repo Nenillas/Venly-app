@@ -7,4 +7,6 @@ export {
   signUpWithPassword,
   signInWithMagicLink,
   waitForSession,
+  requestPasswordReset,
+  updatePassword,
 } from './supabase/auth';

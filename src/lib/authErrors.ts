@@ -28,8 +28,8 @@ export function mapAuthError(message: string | undefined): string {
   if (raw.includes('same password')) {
     return 'Välj ett annat lösenord.';
   }
-  if (raw.includes('otp_expired') || raw.includes('flow state') || raw.includes('invalid or has expired')) {
-    return 'Länken är ogiltig eller har gått ut. Begär en ny.';
+  if (raw.includes('otp_expired') || raw.includes('flow state') || raw.includes('invalid or has expired') || raw.includes('email link is invalid')) {
+    return 'Inloggningslänken är ogiltig eller har gått ut. Begär en ny magisk länk.';
   }
   if (raw.includes('network') || raw.includes('failed to fetch')) {
     return 'Kunde inte nå servern. Kontrollera din uppkoppling.';
@@ -40,4 +40,17 @@ export function mapAuthError(message: string | undefined): string {
     return `Något gick fel: ${message}`;
   }
   return 'Något gick fel. Försök igen.';
+}
+
+/** Avoid showing raw JSON like {"code":403,"error_code":"otp_expired",...} */
+export function friendlyAuthCallbackMessage(raw: string | undefined): string {
+  const text = (raw ?? '').trim();
+  if (!text) return 'Inloggningslänken är ogiltig eller har gått ut. Begär en ny magisk länk.';
+  try {
+    const parsed = JSON.parse(text) as { msg?: string; message?: string; error_code?: string; error?: string };
+    const combined = [parsed.error_code, parsed.msg, parsed.message, parsed.error].filter(Boolean).join(' ');
+    return mapAuthError(combined || text);
+  } catch {
+    return mapAuthError(text);
+  }
 }
