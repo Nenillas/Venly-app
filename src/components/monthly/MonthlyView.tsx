@@ -4,7 +4,7 @@ import {
   Target, TrendingUp, TrendingDown, PiggyBank, Lightbulb, Check, X,
   Copy,
 } from 'lucide-react';
-import { Category, Entry, MonthMeta, SAVINGS_BUCKETS } from '@/lib/types';
+import { Category, Entry, MonthMeta, SAVINGS_BUCKETS, isCarryInIncome, CARRY_IN_INCOME_NAME } from '@/lib/types';
 import { amountToBoostSavings, splitProportionally, totalsFor } from '@/lib/calculations';
 import { formatKr, monthLabel, addMonths } from '@/lib/format';
 import { dockSurplusSection, readDockedUntil } from '@/lib/surplusPlacement';
@@ -51,6 +51,11 @@ export default function MonthlyView({
   const byCat = (c: Category) => monthEntries.filter((e) => e.category === c);
   const sum = (c: Category) => byCat(c).reduce((a, e) => a + e.amount, 0);
 
+  const incomeEntries = useMemo(() => {
+    const rows = monthEntries.filter((e) => e.category === 'income');
+    return [...rows].sort((a, b) => Number(isCarryInIncome(b)) - Number(isCarryInIncome(a)));
+  }, [monthEntries]);
+
   const savingsRows = byCat('savings');
   const boostAmount = amountToBoostSavings(totals);
   const showSuggestion = surplusNotice === 'idle' && boostAmount > 0 && savingsRows.length > 0;
@@ -96,6 +101,15 @@ export default function MonthlyView({
         await onUpdate(existing.id, { amount: next });
       } else {
         await onAdd(month, 'savings', name, amt);
+      }
+    }
+    const allocated = amounts.buffer + amounts.avanza + amounts.travel;
+    if (allocated > 0) {
+      const existing = monthEntries.find((e) => isCarryInIncome(e));
+      if (existing) {
+        await onUpdate(existing.id, { amount: existing.amount + allocated });
+      } else {
+        await onAdd(month, 'income', CARRY_IN_INCOME_NAME, allocated);
       }
     }
     await onUpdateMeta(month, { ending_balance: 0 });
@@ -242,7 +256,7 @@ export default function MonthlyView({
       <div className="grid gap-4 lg:grid-cols-2">
         <EntryList title="Inkomster" hint="Lön, sidoinkomster m.m." accent="emerald"
           icon={<Wallet className="h-5 w-5" />} category="income" month={month}
-          entries={byCat('income')} total={sum('income')} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} />
+          entries={incomeEntries} total={sum('income')} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} />
         <EntryList title="Fasta kostnader" hint="Hyra, abonnemang, lån" accent="amber"
           icon={<Building2 className="h-5 w-5" />} category="fixed" month={month}
           entries={byCat('fixed')} total={sum('fixed')} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} />

@@ -39,6 +39,15 @@ export function isExpense(category: Category): boolean {
   return category === 'fixed' || category === 'variable';
 }
 
+export const CARRY_IN_INCOME_NAME = 'Ingående balans';
+
+export const CARRY_IN_INCOME_HELP =
+  "Denna rad visar den totala summan som fördelats från 'Kvar på lönekontot vid nästa löning'. Summan läggs till under inkomster för att balansera det målinriktade sparandet så att månadens nettoresultat blir korrekt.";
+
+export function isCarryInIncome(entry: Pick<Entry, 'category' | 'name'>): boolean {
+  return entry.category === 'income' && entry.name.trim().toLowerCase() === CARRY_IN_INCOME_NAME.toLowerCase();
+}
+
 export const SAVINGS_TARGETS = {
   buffer: 'Buffert',
   avanza: 'Avanza/Nordnet',

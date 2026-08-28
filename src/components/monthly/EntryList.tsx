@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Trash2, Check, Repeat, CreditCard, ChevronDown, FileText } from 'lucide-react';
-import { Category, Entry, isExpense, PAYMENT_TYPE_LABELS, PAYMENT_TYPES, PaymentType } from '@/lib/types';
+import { Plus, Trash2, Check, Repeat, CreditCard, ChevronDown, FileText, HelpCircle } from 'lucide-react';
+import { Category, Entry, isCarryInIncome, CARRY_IN_INCOME_HELP, CARRY_IN_INCOME_NAME, isExpense, PAYMENT_TYPE_LABELS, PAYMENT_TYPES, PaymentType } from '@/lib/types';
 import { formatKr } from '@/lib/format';
 
 interface Props {
@@ -137,6 +137,7 @@ function Row({
   };
 
   const showType = isExpense(entry.category);
+  const carryIn = isCarryInIncome(entry);
 
   return (
     <div
@@ -151,6 +152,12 @@ function Row({
       ) : (
         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
       )}
+      {carryIn ? (
+        <div className="relative z-[1] flex min-w-0 flex-1 items-center gap-1 px-2 py-1">
+          <span className="truncate text-sm text-slate-200">{CARRY_IN_INCOME_NAME}</span>
+          <CarryInHelp />
+        </div>
+      ) : (
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -158,6 +165,7 @@ function Row({
         onBlur={() => { focused.current = false; commitName(); }}
         className={`relative z-[1] min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-slate-200 outline-none transition ${accentRing} focus:bg-black/20`}
       />
+      )}
       {showType && (
         <PaymentTypePicker
           value={entry.payment_type}
@@ -174,13 +182,17 @@ function Row({
           type="text"
           inputMode="numeric"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          onFocus={() => { focused.current = true; }}
-          onBlur={() => { focused.current = false; commitAmount(); }}
-          className={`relative z-[1] w-24 rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-right text-sm tabular-nums text-slate-100 outline-none transition ${accentRing}`}
+          onChange={(e) => { if (!carryIn) setAmount(e.target.value); }}
+          onFocus={() => { if (!carryIn) focused.current = true; }}
+          onBlur={() => { if (!carryIn) { focused.current = false; commitAmount(); } }}
+          className={`relative z-[1] w-24 rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-right text-sm tabular-nums text-slate-100 outline-none transition ${accentRing} ${
+            carryIn ? 'cursor-default text-slate-300' : ''
+          }`}
+          readOnly={carryIn}
         />
         <span className="pointer-events-none text-xs text-slate-500">kr</span>
       </div>
+      {!carryIn && (
       <button
         type="button"
         onClick={() => {
@@ -193,7 +205,76 @@ function Row({
       >
         <Trash2 className="h-4 w-4" />
       </button>
+      )}
     </div>
+  );
+}
+
+function CarryInHelp() {
+  const [open, setOpen] = useState(false);
+  const btn = useRef<HTMLButtonElement>(null);
+  const tip = useRef<HTMLSpanElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+
+  useLayoutEffect(() => {
+    if (!open || !btn.current) return;
+    const place = () => {
+      const r = btn.current!.getBoundingClientRect();
+      const width = 256;
+      const left = Math.min(r.left, window.innerWidth - width - 12);
+      setPos({ top: r.bottom + 6, left: Math.max(12, left) });
+    };
+    place();
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => {
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (btn.current?.contains(t) || tip.current?.contains(t)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  return (
+    <span className="relative inline-flex shrink-0">
+      <button
+        ref={btn}
+        type="button"
+        aria-label="Vad är ingående balans?"
+        aria-expanded={open}
+        onMouseEnter={() => setOpen(true)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+        className="grid h-5 w-5 place-items-center rounded-full text-slate-500 transition hover:bg-white/10 hover:text-emerald-300"
+      >
+        <HelpCircle className="h-3.5 w-3.5" />
+      </button>
+      {open &&
+        createPortal(
+          <span
+            ref={tip}
+            role="tooltip"
+            onMouseLeave={() => setOpen(false)}
+            style={{ top: pos.top, left: pos.left }}
+            className="fixed z-50 w-64 rounded-xl border border-white/10 bg-ink-850 p-3 text-left text-xs leading-relaxed text-slate-300 shadow-xl shadow-black/40"
+          >
+            {CARRY_IN_INCOME_HELP}
+          </span>,
+          document.body,
+        )}
+    </span>
   );
 }
 
