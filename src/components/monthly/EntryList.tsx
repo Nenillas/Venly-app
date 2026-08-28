@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Trash2, Check, Repeat, CreditCard, ChevronDown, FileText } from 'lucide-react';
 import { Category, Entry, isExpense, PAYMENT_TYPE_LABELS, PAYMENT_TYPES, PaymentType } from '@/lib/types';
 import { formatKr } from '@/lib/format';
@@ -108,6 +109,7 @@ function Row({
 }) {
   const [name, setName] = useState(entry.name);
   const [amount, setAmount] = useState(String(entry.amount));
+  const [typeMenuOpen, setTypeMenuOpen] = useState(false);
   const focused = useRef(false);
 
   useEffect(() => {
@@ -137,7 +139,11 @@ function Row({
   const showType = isExpense(entry.category);
 
   return (
-    <div className="group relative z-[1] flex items-center gap-2 rounded-xl px-2 py-1.5 transition hover:bg-white/5">
+    <div
+      className={`group relative flex items-center gap-2 rounded-xl px-2 py-1.5 transition hover:bg-white/5 ${
+        typeMenuOpen ? 'z-20' : 'z-0 hover:z-10'
+      }`}
+    >
       {showType && entry.paid && entry.payment_type === 'invoice' ? (
         <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-emerald-950" title="Betald" aria-label="Betald">
           <Check className="h-2.5 w-2.5" strokeWidth={3} />
@@ -155,6 +161,7 @@ function Row({
       {showType && (
         <PaymentTypePicker
           value={entry.payment_type}
+          onOpenChange={setTypeMenuOpen}
           onChange={(type) => {
             void onUpdate(entry.id, { payment_type: type }).catch((err) => {
               console.error(err instanceof Error ? err.message : err, err);
@@ -199,19 +206,47 @@ const TYPE_STYLE: Record<PaymentType, { btn: string; icon: typeof FileText }> = 
 function PaymentTypePicker({
   value,
   onChange,
+  onOpenChange,
 }: {
   value: PaymentType;
   onChange: (type: PaymentType) => void;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const menu = useRef<HTMLUListElement>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const style = TYPE_STYLE[value];
   const Icon = style.icon;
+
+  const setMenuOpen = (next: boolean) => {
+    setOpen(next);
+    onOpenChange?.(next);
+  };
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const trigger = box.current?.querySelector('button');
+      if (!trigger) return;
+      const r = trigger.getBoundingClientRect();
+      setMenuPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+    };
+    place();
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => {
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const close = (e: MouseEvent) => {
-      if (!box.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (box.current?.contains(target) || menu.current?.contains(target)) return;
+      setMenuOpen(false);
     };
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
@@ -224,45 +259,53 @@ function PaymentTypePicker({
         aria-label="Betaltyp"
         aria-haspopup="listbox"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          setMenuPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+          setMenuOpen(!open);
+        }}
         className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold transition ${style.btn}`}
       >
         <Icon className="h-3 w-3" />
         {PAYMENT_TYPE_LABELS[value]}
         <ChevronDown className={`h-3 w-3 opacity-70 transition ${open ? 'rotate-180' : ''}`} />
       </button>
-      {open && (
-        <ul
-          role="listbox"
-          className="absolute right-0 z-30 mt-1 min-w-[10.5rem] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl shadow-black/30"
-        >
-          {PAYMENT_TYPES.map((type) => {
-            const OptionIcon = TYPE_STYLE[type].icon;
-            const selected = type === value;
-            return (
-              <li key={type}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={selected}
-                  onClick={() => {
-                    onChange(type);
-                    setOpen(false);
-                  }}
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm ${
-                    selected
-                      ? 'bg-emerald-50 font-semibold text-emerald-900'
-                      : 'text-slate-800 hover:bg-slate-100'
-                  }`}
-                >
-                  <OptionIcon className="h-4 w-4 shrink-0 opacity-80" />
-                  {PAYMENT_TYPE_LABELS[type]}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      {open &&
+        createPortal(
+          <ul
+            ref={menu}
+            role="listbox"
+            style={{ top: menuPos.top, right: menuPos.right }}
+            className="fixed z-50 min-w-[10.5rem] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl shadow-black/30"
+          >
+            {PAYMENT_TYPES.map((type) => {
+              const OptionIcon = TYPE_STYLE[type].icon;
+              const selected = type === value;
+              return (
+                <li key={type}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    onClick={() => {
+                      onChange(type);
+                      setMenuOpen(false);
+                    }}
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm ${
+                      selected
+                        ? 'bg-emerald-50 font-semibold text-emerald-900'
+                        : 'text-slate-800 hover:bg-slate-100'
+                    }`}
+                  >
+                    <OptionIcon className="h-4 w-4 shrink-0 opacity-80" />
+                    {PAYMENT_TYPE_LABELS[type]}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>,
+          document.body,
+        )}
     </div>
   );
 }
