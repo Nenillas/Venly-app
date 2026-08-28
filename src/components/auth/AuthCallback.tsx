@@ -8,6 +8,7 @@ import {
   getAuthLinkError,
   getHashSessionFromUrl,
   getTokenHashFromUrl,
+  isRecoveryAuthLocation,
   loginUrl,
 } from '@/lib/authRedirect';
 import { claimAuthCallbackEffect, claimAuthExchange } from '@/lib/authExchangeLock';
@@ -23,8 +24,26 @@ export default function AuthCallback({ onDone }: { onDone: () => void }) {
 
     const ownsExchange = claimAuthCallbackEffect();
 
+    const expectingPasswordReset = () => {
+      try {
+        return sessionStorage.getItem('venly_password_reset') === '1';
+      } catch {
+        return false;
+      }
+    };
+
+    const goToResetPassword = (session?: Session | null) => {
+      if (!session) return;
+      window.history.replaceState({}, '', '/reset-password');
+      onDone();
+    };
+
     const goToDashboard = (session?: Session | null) => {
       if (!session) return;
+      if (isRecoveryAuthLocation() || expectingPasswordReset()) {
+        goToResetPassword(session);
+        return;
+      }
       window.history.replaceState({}, '', '/');
       onDone();
     };
@@ -44,7 +63,12 @@ export default function AuthCallback({ onDone }: { onDone: () => void }) {
     const client = supabase;
 
     const { data: listener } = client.auth.onAuthStateChange((event, session) => {
-      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
+      if (!session) return;
+      if (event === 'PASSWORD_RECOVERY' || isRecoveryAuthLocation() || expectingPasswordReset()) {
+        goToResetPassword(session);
+        return;
+      }
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
         goToDashboard(session);
       }
     });

@@ -1,4 +1,5 @@
 import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database';
 
 const url = import.meta.env.VITE_SUPABASE_URL?.trim() ?? '';
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ?? '';
@@ -11,7 +12,7 @@ if (!isSupabaseConfigured) {
   );
 }
 
-type BrowserClient = SupabaseClient;
+type BrowserClient = SupabaseClient<Database>;
 let browserClient: BrowserClient | null = null;
 
 function requestUrl(input: RequestInfo | URL): string {
@@ -23,7 +24,7 @@ function requestUrl(input: RequestInfo | URL): string {
 export function createClient(): BrowserClient | null {
   if (!isSupabaseConfigured) return null;
 
-  browserClient = createSupabaseClient(url, anonKey, {
+  browserClient = createSupabaseClient<Database>(url, anonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,

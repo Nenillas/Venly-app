@@ -29,7 +29,7 @@ export function mapAuthError(message: string | undefined): string {
     return 'Välj ett annat lösenord.';
   }
   if (raw.includes('otp_expired') || raw.includes('flow state') || raw.includes('invalid or has expired') || raw.includes('email link is invalid')) {
-    return 'Inloggningslänken är ogiltig eller har gått ut. Begär en ny magisk länk.';
+    return 'Länken är ogiltig eller har gått ut. Begär en ny från e-posten.';
   }
   if (raw.includes('network') || raw.includes('failed to fetch')) {
     return 'Kunde inte nå servern. Kontrollera din uppkoppling.';
@@ -45,7 +45,7 @@ export function mapAuthError(message: string | undefined): string {
 /** Avoid showing raw JSON like {"code":403,"error_code":"otp_expired",...} */
 export function friendlyAuthCallbackMessage(raw: string | undefined): string {
   const text = (raw ?? '').trim();
-  if (!text) return 'Inloggningslänken är ogiltig eller har gått ut. Begär en ny magisk länk.';
+  if (!text) return 'Länken är ogiltig eller har gått ut. Begär en ny från e-posten.';
   try {
     const parsed = JSON.parse(text) as { msg?: string; message?: string; error_code?: string; error?: string };
     const combined = [parsed.error_code, parsed.msg, parsed.message, parsed.error].filter(Boolean).join(' ');
@@ -53,4 +53,16 @@ export function friendlyAuthCallbackMessage(raw: string | undefined): string {
   } catch {
     return mapAuthError(text);
   }
+}
+
+export function friendlyResetLinkMessage(raw: string | undefined): string {
+  const mapped = friendlyAuthCallbackMessage(raw);
+  if (
+    mapped.includes('ogiltig') ||
+    mapped.includes('gått ut') ||
+    (raw ?? '').toLowerCase().includes('otp_expired')
+  ) {
+    return 'Återställningslänken är ogiltig eller har gått ut. Begär en ny.';
+  }
+  return mapped;
 }

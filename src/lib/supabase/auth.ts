@@ -98,6 +98,11 @@ export async function signInWithMagicLink(email: string) {
     console.error(notConfigured);
     return { data: { user: null, session: null }, error: new Error(notConfigured), message: notConfigured };
   }
+  try {
+    sessionStorage.removeItem('venly_password_reset');
+  } catch {
+    /* ignore */
+  }
   const { data, error } = await supabase.auth.signInWithOtp({
     email,
     options: {
@@ -121,6 +126,11 @@ export async function requestPasswordReset(email: string) {
   if (!supabase) {
     console.error(notConfigured);
     return { error: new Error(notConfigured), message: notConfigured };
+  }
+  try {
+    sessionStorage.setItem('venly_password_reset', '1');
+  } catch {
+    /* ignore quota / private mode */
   }
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: passwordResetRedirectTo(),

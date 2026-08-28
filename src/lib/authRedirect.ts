@@ -26,6 +26,17 @@ export function readLoginAuthInfo(): string | null {
   }
 }
 
+export function isRecoveryAuthLocation(href = window.location.href): boolean {
+  try {
+    const url = new URL(href);
+    if (url.searchParams.get('type') === 'recovery') return true;
+    const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+    return hash.get('type') === 'recovery';
+  } catch {
+    return false;
+  }
+}
+
 export function isResetPasswordLocation(href = window.location.href): boolean {
   try {
     return new URL(href).pathname.startsWith('/reset-password');
@@ -47,10 +58,14 @@ export function getTokenHashFromUrl(href = window.location.href): {
   type: string;
 } | null {
   const url = new URL(href);
-  const token_hash = url.searchParams.get('token_hash');
-  const type = url.searchParams.get('type');
-  if (!token_hash || !type) return null;
-  return { token_hash, type };
+  const fromQuery = url.searchParams.get('token_hash');
+  const typeQuery = url.searchParams.get('type');
+  if (fromQuery && typeQuery) return { token_hash: fromQuery, type: typeQuery };
+  const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+  const fromHash = hash.get('token_hash');
+  const typeHash = hash.get('type');
+  if (fromHash && typeHash) return { token_hash: fromHash, type: typeHash };
+  return null;
 }
 
 export function getHashSessionFromUrl(href = window.location.href): {
@@ -78,6 +93,7 @@ export function isAuthCallbackLocation(href = window.location.href): boolean {
   const url = new URL(href);
   if (url.pathname.startsWith('/reset-password')) return false;
   if (url.pathname.startsWith('/login')) return false;
+  if (isRecoveryAuthLocation(href)) return false;
   if (url.pathname.startsWith('/auth/callback')) return true;
   if (url.searchParams.get('code')) return true;
   if (url.searchParams.get('token_hash')) return true;

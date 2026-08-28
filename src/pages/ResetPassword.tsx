@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Loader2, Lock } from 'lucide-react';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
-import { friendlyAuthCallbackMessage } from '@/lib/authErrors';
+import { friendlyResetLinkMessage } from '@/lib/authErrors';
 import {
   getAuthCodeFromUrl,
   getAuthLinkError,
@@ -15,8 +15,8 @@ import { signOut, updatePassword, waitForSession } from '@/lib/supabase/auth';
 import VenlyLogo from '@/components/VenlyLogo';
 
 export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
-  const hasHandledAuth = useRef(false);
-  const [ready, setReady] = useState(false);
+  const hasHandledReset = useRef(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -24,15 +24,20 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (hasHandledAuth.current) return;
-    hasHandledAuth.current = true;
+    if (hasHandledReset.current) return;
+    hasHandledReset.current = true;
 
     const ownsExchange = claimResetPasswordEffect();
 
     const fail = (raw: string) => {
       console.error(raw);
-      window.history.replaceState({}, '', loginUrl(friendlyAuthCallbackMessage(raw)));
+      window.history.replaceState({}, '', loginUrl(friendlyResetLinkMessage(raw)));
       onLeave();
+    };
+
+    const allowPasswordForm = () => {
+      window.history.replaceState({}, '', '/reset-password');
+      setIsResettingPassword(true);
     };
 
     if (!supabase) {
@@ -41,75 +46,91 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
     }
 
     const client = supabase;
-    const code = getAuthCodeFromUrl();
-    const hashed = getTokenHashFromUrl();
-    const implicit = getHashSessionFromUrl();
-    const canExchangeCode = Boolean(code && claimAuthExchange(`recovery-code:${code}`));
-    const canVerifyOtp = Boolean(hashed && claimAuthExchange(`recovery-otp:${hashed.token_hash}`));
-    const canSetHash = Boolean(implicit && claimAuthExchange(`recovery-hash:${implicit.access_token.slice(0, 24)}`));
+
+    const { data: listener } = client.auth.onAuthStateChange((event, session) => {
+      if ((event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
+        allowPasswordForm();
+      }
+    });
 
     const run = async () => {
       try {
+        const existing = await client.auth.getSession();
+        if (existing.error) console.error(existing.error.message, existing.error);
+        if (existing.data.session?.user) {
+          allowPasswordForm();
+          return;
+        }
+
         const linkError = getAuthLinkError();
         if (linkError) {
           fail(linkError);
           return;
         }
 
-        const existing = await client.auth.getSession();
-        if (existing.data.session?.user) {
-          window.history.replaceState({}, '', '/reset-password');
-          setReady(true);
-          return;
-        }
-
         if (!ownsExchange) {
           const session = await waitForSession();
-          if (session) {
-            window.history.replaceState({}, '', '/reset-password');
-            setReady(true);
-            return;
-          }
-          fail('Återställningslänken är ogiltig eller har gått ut. Begär en ny.');
+          if (session) allowPasswordForm();
+          else fail('Återställningslänken är ogiltig eller har gått ut. Begär en ny.');
           return;
         }
 
-        if (code && canExchangeCode) {
+        const code = getAuthCodeFromUrl();
+        const hashed = getTokenHashFromUrl();
+        const implicit = getHashSessionFromUrl();
+
+        if (code && claimAuthExchange(`recovery-code:${code}`)) {
           const { data, error: exchangeError } = await client.auth.exchangeCodeForSession(code);
-          if (exchangeError && !data.session) {
+          if (data.session) {
+            allowPasswordForm();
+            return;
+          }
+          const after = await client.auth.getSession();
+          if (after.data.session?.user) {
+            allowPasswordForm();
+            return;
+          }
+          if (exchangeError) {
             fail(exchangeError.message);
             return;
           }
-        } else if (hashed && canVerifyOtp) {
+        } else if (hashed && claimAuthExchange(`recovery-otp:${hashed.token_hash}`)) {
           const { data, error: otpError } = await client.auth.verifyOtp({
             token_hash: hashed.token_hash,
             type: (hashed.type || 'recovery') as EmailOtpType,
           });
-          if (otpError && !data.session) {
+          if (data.session) {
+            allowPasswordForm();
+            return;
+          }
+          if (otpError) {
             fail(otpError.message);
             return;
           }
-        } else if (implicit && canSetHash) {
+        } else if (implicit && claimAuthExchange(`recovery-hash:${implicit.access_token.slice(0, 24)}`)) {
           const { data, error: sessionError } = await client.auth.setSession(implicit);
-          if (sessionError && !data.session) {
+          if (data.session) {
+            allowPasswordForm();
+            return;
+          }
+          if (sessionError) {
             fail(sessionError.message);
             return;
           }
         }
 
-        const session = existing.data.session ?? await waitForSession();
-        if (!session) {
-          fail('Återställningslänken är ogiltig eller har gått ut. Begär en ny.');
-          return;
-        }
-        window.history.replaceState({}, '', '/reset-password');
-        setReady(true);
+        const session = await waitForSession();
+        if (session) allowPasswordForm();
+        else fail('Återställningslänken är ogiltig eller har gått ut. Begär en ny.');
       } catch (err) {
         fail(err instanceof Error ? err.message : String(err));
       }
     };
 
     void run();
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, [onLeave]);
 
   const submit = async (e: FormEvent) => {
@@ -132,12 +153,17 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
       return;
     }
     setInfo('Lösenordet är uppdaterat. Du skickas till inloggningen…');
+    try {
+      sessionStorage.removeItem('venly_password_reset');
+    } catch {
+      /* ignore */
+    }
     await signOut();
     window.history.replaceState({}, '', loginUrl(undefined, 'Lösenordet är uppdaterat. Logga in med ditt nya lösenord.'));
     onLeave();
   };
 
-  if (!ready) {
+  if (!isResettingPassword) {
     return (
       <div className="grid min-h-screen place-items-center text-slate-500">
         <div className="text-center">

@@ -3,7 +3,7 @@ import { Wallet, LineChart, CheckSquare, Lightbulb } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFinance } from '@/hooks/useFinance';
 import { currentMonth } from '@/lib/format';
-import { isAuthCallbackLocation, isResetPasswordLocation } from '@/lib/authRedirect';
+import { isAuthCallbackLocation, isRecoveryAuthLocation, isResetPasswordLocation } from '@/lib/authRedirect';
 import MonthlyView from '@/components/monthly/MonthlyView';
 import AnalyticsView from '@/components/analytics/AnalyticsView';
 import InsightView from '@/components/insight/InsightView';
@@ -28,8 +28,13 @@ function App() {
   const [tab, setTab] = useState<Tab>('monthly');
   const [month, setMonth] = useState(currentMonth);
   const [handlingCallback, setHandlingCallback] = useState(() => isAuthCallbackLocation());
-  const [resetPassword, setResetPassword] = useState(() => isResetPasswordLocation());
-  const finishCallback = useCallback(() => setHandlingCallback(false), []);
+  const [resetPassword, setResetPassword] = useState(
+    () => isResetPasswordLocation() || isRecoveryAuthLocation(),
+  );
+  const finishCallback = useCallback(() => {
+    setHandlingCallback(false);
+    setResetPassword(isResetPasswordLocation() || isRecoveryAuthLocation());
+  }, []);
   const leaveResetPassword = useCallback(() => setResetPassword(isResetPasswordLocation()), []);
   const finance = useFinance(user?.id, !authLoading && !handlingCallback && !resetPassword && Boolean(user));
 
