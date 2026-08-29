@@ -50,7 +50,7 @@ function App() {
     return (
       <div className="grid min-h-screen place-items-center text-slate-500">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-emerald-400" />
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-teal-300" />
           <p className="mt-4 text-sm">Kontrollerar inloggning…</p>
         </div>
       </div>
@@ -63,15 +63,15 @@ function App() {
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden">
-      <header className="sticky top-0 z-30 isolate border-b border-white/5 bg-ink-950">
+      <header className="sticky top-0 z-30 isolate border-b border-white/[0.06] bg-ink-950/80 backdrop-blur-xl">
         <div className="page-shell pointer-events-auto flex items-center justify-between gap-2 py-3.5 sm:gap-4">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <VenlyLogo size={40} />
             <div className="min-w-0">
-              <h1 className="font-display text-lg font-bold leading-none text-slate-50">
-                Ven<span className="text-emerald-400">ly</span>
+              <h1 className="font-display text-lg font-bold leading-none text-zinc-50">
+                Ven<span className="text-teal-300">ly</span>
               </h1>
-              <p className="mt-0.5 hidden truncate text-xs text-slate-500 sm:block">Smartare kontroll över din ekonomi</p>
+              <p className="mt-0.5 hidden truncate text-xs text-zinc-500 sm:block">Smartare kontroll över din ekonomi</p>
             </div>
           </div>
           <UserMenu user={user} onSignOut={signOut} />
@@ -85,11 +85,11 @@ function App() {
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`relative flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium transition sm:px-4 ${active ? 'text-emerald-400' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`relative flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium transition-all duration-200 sm:px-4 ${active ? 'text-teal-300' : 'text-zinc-400 hover:text-zinc-200'}`}
               >
                 <t.icon className="h-4 w-4 shrink-0" />
                 <span className="hidden sm:inline">{t.label}</span>
-                {active && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-emerald-400" />}
+                {active && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-teal-300/90" />}
               </button>
             );
           })}
@@ -98,14 +98,14 @@ function App() {
 
       <main className="page-shell relative z-10 py-6 sm:py-8">
         {finance.error && (
-          <div className="mb-4 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-300">
+          <div className="mb-4 rounded-2xl border border-rose-300/20 bg-rose-300/10 px-4 py-3 text-sm text-rose-200">
             {finance.error}
           </div>
         )}
 
         {finance.loading ? (
           <div className="grid place-items-center py-32 text-slate-500">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-emerald-400" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-teal-300" />
             <p className="mt-4 text-sm">Laddar din ekonomi…</p>
           </div>
         ) : tab === 'monthly' ? (

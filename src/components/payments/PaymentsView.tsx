@@ -13,8 +13,8 @@ interface Props {
 const COST_CATEGORIES: Category[] = ['fixed', 'variable'];
 
 const TAG = {
-  fixed: 'bg-amber-400/10 text-amber-300 ring-amber-400/20',
-  variable: 'bg-sky-400/10 text-sky-300 ring-sky-400/20',
+  fixed: 'bg-amber-400/10 text-amber-200/90 ring-amber-400/15',
+  variable: 'bg-sky-400/10 text-sky-200/90 ring-sky-400/15',
 } as const;
 
 function paymentAmount(entry: Entry): number {
@@ -74,46 +74,48 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
 
   return (
     <div className="w-full min-w-0 space-y-6">
-      <header className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 animate-fade-in">
+      <header className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 animate-fade-in">
         <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
           <button
+            type="button"
             onClick={() => onMonthChange(addMonths(month, -1))}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10"
+            className="icon-btn"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <div className="min-w-0 flex-1 text-center sm:min-w-[11rem] sm:flex-none">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Betalningar</div>
-            <div className="font-display text-lg font-bold capitalize text-slate-50">{monthLabel(month)}</div>
+            <div className="text-xs uppercase tracking-wide text-zinc-500">Betalningar</div>
+            <div className="font-display text-lg font-bold capitalize text-zinc-50">{monthLabel(month)}</div>
           </div>
           <button
+            type="button"
             onClick={() => onMonthChange(addMonths(month, 1))}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10"
+            className="icon-btn"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
       </header>
 
-      <section className="card p-5 animate-slide-up">
+      <section className="card p-5 sm:p-6 animate-slide-up">
         <div className="flex items-start gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-400/10 text-emerald-400">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-teal-400/10 text-teal-300">
             <CheckSquare className="h-5 w-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="font-display text-lg font-bold text-slate-50">
+            <h2 className="font-display text-lg font-bold text-zinc-50">
               {total === 0
                 ? 'Inga fakturor att betala manuellt'
                 : `${paidCount} av ${total} räkningar betalda (${formatPercent(pct)})`}
             </h2>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-zinc-400">
               {total === 0
                 ? 'Endast fakturor över 0 kr räknas i checklistan. Autogiro och kortköp ligger i en egen lista under.'
-                : <>Kvar att betala: <b className="text-slate-200">{formatKr(remaining)}</b></>}
+                : <>Kvar att betala: <b className="text-zinc-100">{formatKr(remaining)}</b></>}
             </p>
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/5">
               <div
-                className="h-full rounded-full bg-emerald-400 transition-all duration-500"
+                className="h-full rounded-full bg-teal-400/80 transition-all duration-500"
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -148,7 +150,7 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
             type="button"
             aria-expanded={otherOpen}
             onClick={() => setOtherOpen((v) => !v)}
-            className="flex w-full items-center gap-3 p-5 text-left"
+            className="flex w-full items-center gap-3 p-5 text-left transition-all duration-200 hover:bg-white/[0.02]"
           >
             <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300">
               <Repeat className="h-5 w-5" />
@@ -249,14 +251,14 @@ function BillRow({
       <button
         type="button"
         onClick={() => onToggle(bill.id, !paid)}
-        className={`card flex w-full min-w-0 items-center gap-3 p-4 text-left transition-all duration-300 ${
-          paid ? 'opacity-60' : 'hover:border-white/10'
+        className={`card flex w-full min-w-0 items-center gap-3 p-5 text-left transition-all duration-200 ${
+          paid ? 'opacity-60' : 'hover:border-white/10 hover:bg-white/[0.02]'
         }`}
       >
         <span
-          className={`grid h-6 w-6 shrink-0 place-items-center rounded-md border ${
+          className={`grid h-6 w-6 shrink-0 place-items-center rounded-md border transition-all duration-200 ${
             paid
-              ? 'border-emerald-400/40 bg-emerald-400 text-emerald-950'
+              ? 'border-teal-400/40 bg-teal-400/90 text-teal-950'
               : 'border-white/15 bg-black/20'
           }`}
         >

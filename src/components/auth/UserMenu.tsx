@@ -20,10 +20,10 @@ export default function UserMenu({ user, onSignOut }: { user: AuthUser; onSignOu
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex max-w-[min(16rem,calc(100vw-2rem))] items-center gap-2 rounded-xl bg-white/5 px-2 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 sm:max-w-[16rem] sm:px-3"
+        className="flex max-w-[min(16rem,calc(100vw-2rem))] items-center gap-2 rounded-xl bg-white/[0.04] px-2 py-2 text-left text-sm text-zinc-300 transition-all duration-200 hover:bg-white/[0.08] sm:max-w-[16rem] sm:px-3"
         aria-expanded={open}
       >
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-emerald-400/10 text-emerald-400">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-teal-400/10 text-teal-300">
           <User className="h-4 w-4" />
         </span>
         <span className="hidden truncate sm:inline">{email}</span>
@@ -35,7 +35,7 @@ export default function UserMenu({ user, onSignOut }: { user: AuthUser; onSignOu
           <button
             type="button"
             onClick={() => { setOpen(false); onSignOut(); }}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-rose-300 transition hover:bg-white/5"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-rose-300 transition-all duration-200 hover:bg-white/5"
           >
             <LogOut className="h-4 w-4" /> Logga ut
           </button>

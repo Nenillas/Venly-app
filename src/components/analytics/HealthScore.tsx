@@ -10,9 +10,9 @@ import {
 import { formatPercent } from '@/lib/format';
 
 const COLOR = {
-  emerald: { text: 'text-emerald-400', bar: 'bg-emerald-400', ring: 'text-emerald-400', label: 'Utmärkt' },
-  amber: { text: 'text-amber-400', bar: 'bg-amber-400', ring: 'text-amber-400', label: 'Okej' },
-  rose: { text: 'text-rose-400', bar: 'bg-rose-400', ring: 'text-rose-400', label: 'Behöver ses över' },
+  emerald: { text: 'text-teal-300', bar: 'bg-teal-400/80', ring: 'text-teal-300', label: 'Utmärkt' },
+  amber: { text: 'text-amber-300', bar: 'bg-amber-400/80', ring: 'text-amber-300', label: 'Okej' },
+  rose: { text: 'text-rose-300', bar: 'bg-rose-400/70', ring: 'text-rose-300', label: 'Behöver ses över' },
 };
 
 const FACTORS: {
@@ -53,11 +53,11 @@ export default function HealthScore({ score }: { score: Score }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="card w-full min-w-0 p-4 text-left animate-slide-up transition hover:border-white/10 sm:p-6"
+        className="card w-full min-w-0 p-5 text-left animate-slide-up transition-all duration-200 hover:border-white/10 hover:bg-white/[0.02] sm:p-6"
       >
         <div className="flex items-center justify-between gap-2 text-slate-300">
           <span className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-emerald-400" />
+            <ShieldCheck className="h-5 w-5 text-teal-300" />
             <h2 className="font-display text-lg font-bold">Hälsobetyg</h2>
           </span>
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/5 text-slate-400">
@@ -139,7 +139,7 @@ function HealthScoreModal({ score, onClose }: { score: Score; onClose: () => voi
         </button>
 
         <div className="flex items-center gap-3 pr-8">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-400">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-teal-400/10 text-teal-300">
             <Info className="h-5 w-5" />
           </span>
           <div>

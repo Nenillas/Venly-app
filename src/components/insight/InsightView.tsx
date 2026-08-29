@@ -44,21 +44,23 @@ export default function InsightView({ month, onMonthChange, entries, getMeta }: 
 
   return (
     <div className="w-full min-w-0 space-y-6">
-      <header className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 animate-fade-in">
+      <header className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 animate-fade-in">
         <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
           <button
+            type="button"
             onClick={() => onMonthChange(addMonths(month, -1))}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10"
+            className="icon-btn"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <div className="min-w-0 flex-1 text-center sm:min-w-[11rem] sm:flex-none">
-            <div className="text-xs uppercase tracking-wide text-slate-500">AI-insikt</div>
-            <div className="font-display text-lg font-bold capitalize text-slate-50">{monthLabel(month)}</div>
+            <div className="text-xs uppercase tracking-wide text-zinc-500">AI-insikt</div>
+            <div className="font-display text-lg font-bold capitalize text-zinc-50">{monthLabel(month)}</div>
           </div>
           <button
+            type="button"
             onClick={() => onMonthChange(addMonths(month, 1))}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10"
+            className="icon-btn"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -66,12 +68,12 @@ export default function InsightView({ month, onMonthChange, entries, getMeta }: 
       </header>
 
       <section className="card relative overflow-hidden p-6 animate-slide-up">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-emerald-400/10 blur-3xl" />
-        <div className="flex items-center gap-2 text-emerald-300">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-teal-400/10 blur-3xl" />
+        <div className="flex items-center gap-2 text-teal-200">
           <Sparkles className="h-5 w-5" />
           <h2 className="font-display text-lg font-bold">Månadens AI-insikt</h2>
         </div>
-        <p className="mt-4 text-lg leading-relaxed text-slate-100 break-words">{headline}</p>
+        <p className="mt-4 text-lg leading-relaxed text-zinc-100 break-words">{headline}</p>
       </section>
 
       {recommendations.length > 0 && (

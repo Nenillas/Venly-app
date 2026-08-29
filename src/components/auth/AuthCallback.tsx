@@ -187,7 +187,7 @@ export default function AuthCallback({ onDone }: { onDone: () => void }) {
     <div className="grid min-h-screen place-items-center text-slate-500">
       <div className="text-center">
         <VenlyLogo size={40} className="mx-auto mb-4" />
-        <Loader2 className="mx-auto h-8 w-8 animate-spin text-emerald-400" />
+        <Loader2 className="mx-auto h-8 w-8 animate-spin text-teal-300" />
         <p className="mt-4 text-sm">Bekräftar inloggningen…</p>
       </div>
     </div>

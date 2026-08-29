@@ -125,7 +125,7 @@ export default function AuthView() {
         <VenlyLogo size={40} />
         <div>
           <h1 className="font-display text-2xl font-bold leading-none text-slate-50">
-            Ven<span className="text-emerald-400">ly</span>
+            Ven<span className="text-teal-300">ly</span>
           </h1>
           <p className="mt-1 text-sm text-slate-500">Smartare kontroll över din ekonomi</p>
         </div>
@@ -139,7 +139,7 @@ export default function AuthView() {
               type="button"
               onClick={() => { setMode(id); setError(null); setInfo(null); }}
               className={`rounded-lg py-2 text-sm font-medium transition ${
-                mode === id ? 'bg-ink-800 text-emerald-300 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                mode === id ? 'bg-ink-800 text-teal-200 shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
               {id === 'login' ? 'Logga in' : 'Skapa konto'}
@@ -164,21 +164,21 @@ export default function AuthView() {
                   autoComplete="username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-ink-850 px-3 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-emerald-400/60"
+                  className="field w-full px-3 py-2.5 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-600"
                   placeholder="du@epost.se"
                   required
                 />
               </label>
               {error && (
-                <p className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-sm text-rose-300">{error}</p>
+                <p className="rounded-2xl border border-rose-300/20 bg-rose-300/10 px-3 py-2 text-sm text-rose-200">{error}</p>
               )}
               {info && (
-                <p className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-300">{info}</p>
+                <p className="rounded-2xl border border-teal-400/20 bg-teal-400/10 px-3 py-2 text-sm text-teal-200">{info}</p>
               )}
               <button
                 type="submit"
                 disabled={busy}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:opacity-60"
+                className="btn-primary flex w-full items-center justify-center gap-2"
               >
                 {busy && <Loader2 className="h-4 w-4 animate-spin" />}
                 Skicka återställningslänk
@@ -216,7 +216,7 @@ export default function AuthView() {
               inputMode="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-ink-850 px-3 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-emerald-400/60"
+              className="field w-full px-3 py-2.5 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-600"
               placeholder="du@epost.se"
               required
             />
@@ -230,7 +230,7 @@ export default function AuthView() {
                 <button
                   type="button"
                   onClick={() => { setMode('forgot'); setError(null); setInfo(null); }}
-                  className="font-medium text-emerald-400/90 transition hover:text-emerald-300"
+                  className="font-medium text-teal-300/90 transition-all duration-200 hover:text-teal-200"
                 >
                   Glömt lösenord?
                 </button>
@@ -243,7 +243,7 @@ export default function AuthView() {
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-ink-850 px-3 py-2.5 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-emerald-400/60"
+              className="field w-full px-3 py-2.5 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-600"
               placeholder={mode === 'signup' ? 'Minst 6 tecken' : '••••••••'}
               minLength={mode === 'signup' ? 6 : undefined}
               required
@@ -251,16 +251,16 @@ export default function AuthView() {
           </label>
 
           {error && (
-            <p className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-sm text-rose-300">{error}</p>
+            <p className="rounded-2xl border border-rose-300/20 bg-rose-300/10 px-3 py-2 text-sm text-rose-200">{error}</p>
           )}
           {info && (
-            <p className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-300">{info}</p>
+            <p className="rounded-2xl border border-teal-400/20 bg-teal-400/10 px-3 py-2 text-sm text-teal-200">{info}</p>
           )}
 
           <button
             type="submit"
             disabled={busy}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:opacity-60"
+            className="btn-primary flex w-full items-center justify-center gap-2"
           >
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}
             {mode === 'login' ? 'Logga in' : 'Skapa konto'}
@@ -277,9 +277,9 @@ export default function AuthView() {
           type="button"
           disabled={busy}
           onClick={sendMagicLink}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 py-2.5 text-sm font-medium text-slate-300 transition hover:border-white/20 hover:text-slate-100 disabled:opacity-60"
+          className="btn-secondary flex w-full items-center justify-center gap-2 py-2.5 disabled:opacity-60"
         >
-          <Mail className="h-4 w-4 text-emerald-400" />
+          <Mail className="h-4 w-4 text-teal-300" />
           Skicka magisk länk
         </button>
           </>

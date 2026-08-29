@@ -18,10 +18,10 @@ interface Props {
 
 const ICONS = [PiggyBank, TrendingUp, Plane, Target];
 const COLORS = [
-  { text: 'text-emerald-400', bar: 'bg-emerald-400' },
-  { text: 'text-sky-400', bar: 'bg-sky-400' },
-  { text: 'text-amber-400', bar: 'bg-amber-400' },
-  { text: 'text-violet-400', bar: 'bg-violet-400' },
+  { text: 'text-teal-300', bar: 'bg-teal-400/80' },
+  { text: 'text-sky-300', bar: 'bg-sky-400/80' },
+  { text: 'text-amber-300', bar: 'bg-amber-400/80' },
+  { text: 'text-zinc-300', bar: 'bg-zinc-400/70' },
 ];
 
 function initialPercents(targets: SavingsTarget[], meta: MonthMeta, usingDefaults: boolean): number[] {
@@ -93,7 +93,7 @@ export default function SurplusModal({
         </button>
 
         <div className="flex items-center gap-3 pr-8">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400/10 text-emerald-400">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-teal-400/10 text-teal-300">
             <Sparkles className="h-6 w-6" />
           </span>
           <div>
@@ -107,13 +107,13 @@ export default function SurplusModal({
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-xl bg-black/25 p-4">
+          <div className="rounded-2xl bg-black/20 p-4">
             <div className="text-xs text-slate-500">Faktiska levnadskostnader</div>
             <div className="stat-num mt-1 text-lg text-slate-200">{formatKr(livingCosts)}</div>
           </div>
-          <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4">
-            <div className="text-xs text-emerald-300/80">Överskott att fördela</div>
-            <div className="stat-num mt-1 text-lg text-emerald-400">{formatKr(surplus)}</div>
+          <div className="rounded-2xl border border-teal-400/15 bg-teal-400/[0.06] p-4">
+            <div className="text-xs text-teal-200/80">Överskott att fördela</div>
+            <div className="stat-num mt-1 text-lg text-teal-300">{formatKr(surplus)}</div>
           </div>
         </div>
 
@@ -140,7 +140,7 @@ export default function SurplusModal({
                   step={5}
                   value={pct}
                   onChange={(e) => setPercent(i, Number(e.target.value))}
-                  className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-emerald-400"
+                  className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-teal-400"
                 />
                 <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/5">
                   <div className={`h-full ${color.bar} transition-all`} style={{ width: `${pct}%` }} />
@@ -151,17 +151,17 @@ export default function SurplusModal({
         </div>
 
         <div className="mt-4 space-y-2">
-          <div className={`flex items-center justify-between rounded-xl px-4 py-2.5 text-sm ${overLimit ? 'bg-rose-500/10 text-rose-300' : 'bg-white/5 text-slate-400'}`}>
+          <div className={`flex items-center justify-between rounded-2xl px-4 py-2.5 text-sm ${overLimit ? 'bg-rose-300/10 text-rose-200' : 'bg-white/[0.04] text-zinc-400'}`}>
             <span>Summa fördelning</span>
             <span className="tabular-nums font-semibold">{sum}%</span>
           </div>
           {overLimit ? (
-            <p className="text-center text-sm text-rose-300">Total fördelning kan inte överstiga 100%.</p>
+            <p className="text-center text-sm text-rose-200">Total fördelning kan inte överstiga 100%.</p>
           ) : (
             <>
               <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
                 <div
-                  className="h-full rounded-full bg-emerald-400 transition-all"
+                  className="h-full rounded-full bg-teal-400/80 transition-all duration-200"
                   style={{ width: `${Math.min(100, Math.max(0, sum))}%` }}
                 />
               </div>
@@ -189,7 +189,7 @@ export default function SurplusModal({
           type="button"
           onClick={apply}
           disabled={!valid || busy || done}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3 font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-primary mt-5 flex w-full items-center justify-center gap-2 py-3"
         >
           {done ? (<><Check className="h-5 w-5" /> Fördelat!</>) : busy ? 'Verkställer…' : 'Verkställ fördelning'}
         </button>

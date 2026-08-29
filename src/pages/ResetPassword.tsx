@@ -168,7 +168,7 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
       <div className="grid min-h-screen place-items-center text-slate-500">
         <div className="text-center">
           <VenlyLogo size={40} className="mx-auto mb-4" />
-          <Loader2 className="mx-auto h-8 w-8 animate-spin text-emerald-400" />
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-teal-300" />
           <p className="mt-4 text-sm">Förbereder återställning…</p>
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
         <VenlyLogo size={40} />
         <div>
           <h1 className="font-display text-2xl font-bold leading-none text-slate-50">
-            Ven<span className="text-emerald-400">ly</span>
+            Ven<span className="text-teal-300">ly</span>
           </h1>
           <p className="mt-1 text-sm text-slate-500">Välj ett nytt lösenord</p>
         </div>
@@ -202,7 +202,7 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-ink-850 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-emerald-400/60"
+              className="field w-full px-3 py-2.5 text-sm text-zinc-100 outline-none transition-all duration-200"
               placeholder="Minst 6 tecken"
               minLength={6}
               required
@@ -218,7 +218,7 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
               autoComplete="new-password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-ink-850 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-emerald-400/60"
+              className="field w-full px-3 py-2.5 text-sm text-zinc-100 outline-none transition-all duration-200"
               placeholder="Upprepa lösenordet"
               minLength={6}
               required
@@ -226,16 +226,16 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
           </label>
 
           {error && (
-            <p className="rounded-xl border border-rose-400/20 bg-rose-400/10 px-3 py-2 text-sm text-rose-300">{error}</p>
+            <p className="rounded-2xl border border-rose-300/20 bg-rose-300/10 px-3 py-2 text-sm text-rose-200">{error}</p>
           )}
           {info && (
-            <p className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-300">{info}</p>
+            <p className="rounded-2xl border border-teal-400/20 bg-teal-400/10 px-3 py-2 text-sm text-teal-200">{info}</p>
           )}
 
           <button
             type="submit"
             disabled={busy}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:opacity-60"
+            className="btn-primary flex w-full items-center justify-center gap-2"
           >
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}
             Spara nytt lösenord

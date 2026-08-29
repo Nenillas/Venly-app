@@ -147,39 +147,39 @@ export default function MonthlyView({
   };
 
   const stats = [
-    { label: 'Inkomster', value: totals.income, icon: Wallet, color: 'text-emerald-400', ring: 'ring-emerald-400/20' },
-    { label: 'Kostnader', value: totals.expenses, icon: ShoppingBag, color: 'text-rose-400', ring: 'ring-rose-400/20' },
-    { label: 'Sparande', value: totals.savings, icon: PiggyBank, color: 'text-sky-400', ring: 'ring-sky-400/20' },
+    { label: 'Inkomster', value: totals.income, icon: Wallet, color: 'text-teal-300', ring: 'ring-teal-400/15' },
+    { label: 'Kostnader', value: totals.expenses, icon: ShoppingBag, color: 'text-rose-300', ring: 'ring-rose-300/15' },
+    { label: 'Sparande', value: totals.savings, icon: PiggyBank, color: 'text-sky-300', ring: 'ring-sky-400/15' },
   ];
 
   return (
     <div className="w-full min-w-0 space-y-6">
-      <header className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 animate-fade-in">
+      <header className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 animate-fade-in">
         <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
           <button
             type="button"
             onClick={() => { setSurplusNotice('idle'); onMonthChange(addMonths(month, -1)); }}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10">
+            className="icon-btn">
             <ChevronLeft className="h-5 w-5" />
           </button>
           <div className="min-w-0 flex-1 text-center sm:min-w-[11rem] sm:flex-none">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Månadsöversikt</div>
-            <div className="font-display text-lg font-bold capitalize text-slate-50">{monthLabel(month)}</div>
+            <div className="text-xs uppercase tracking-wide text-zinc-500">Månadsöversikt</div>
+            <div className="font-display text-lg font-bold capitalize text-zinc-50">{monthLabel(month)}</div>
           </div>
           <button
             type="button"
             onClick={() => { setSurplusNotice('idle'); onMonthChange(addMonths(month, 1)); }}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10">
+            className="icon-btn">
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
 
-        <div className={`flex min-w-0 w-full items-center gap-3 rounded-2xl px-4 py-2.5 ring-1 sm:w-auto ${totals.net >= 0 ? 'bg-emerald-400/5 ring-emerald-400/20' : 'bg-rose-400/5 ring-rose-400/20'}`}>
-          {totals.net >= 0 ? <TrendingUp className="h-5 w-5 text-emerald-400" /> : <TrendingDown className="h-5 w-5 text-rose-400" />}
+        <div className={`flex min-w-0 w-full items-center gap-3 px-5 py-3.5 sm:w-auto ${totals.net >= 0 ? 'metric-positive' : 'metric-negative'}`}>
+          {totals.net >= 0 ? <TrendingUp className="h-5 w-5 text-teal-300" /> : <TrendingDown className="h-5 w-5 text-rose-300" />}
           <div>
-            <div className="text-xs text-slate-500">Nettoresultat</div>
-            <div className={`stat-num text-lg ${totals.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{formatKr(totals.net)}</div>
-            <div className="text-[11px] text-slate-600">exkl. saldo på lönekontot</div>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Nettoresultat</div>
+            <div className={`stat-num text-2xl ${totals.net >= 0 ? 'text-teal-300' : 'text-rose-300'}`}>{formatKr(totals.net)}</div>
+            <div className="text-[11px] text-zinc-600">exkl. saldo på lönekontot</div>
           </div>
         </div>
       </header>
@@ -198,13 +198,13 @@ export default function MonthlyView({
       )}
 
       {showCopyPrompt && (
-        <section className="card relative overflow-hidden border-emerald-400/20 p-5 animate-slide-up">
+        <section className="card relative overflow-hidden border-teal-400/15 p-5 sm:p-6 animate-slide-up">
           <div className="flex items-start gap-4">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-400/10 text-emerald-400">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-teal-400/10 text-teal-300">
               <Copy className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <h3 className="font-display font-semibold text-emerald-300">Starta 2-minutersrutinen</h3>
+              <h3 className="font-display font-semibold text-teal-200">Starta 2-minutersrutinen</h3>
               <p className="mt-1 text-sm text-slate-400">
                 {monthLabel(month)} är tom. Kopiera poster och sparfördelning från{' '}
                 <b className="text-slate-200">{monthLabel(previousMonthWithData!)}</b> och justera bara det som ändrats.
@@ -212,7 +212,7 @@ export default function MonthlyView({
               <button
                 onClick={copyPrevious}
                 disabled={copying}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:opacity-50 sm:w-auto"
+                className="btn-primary mt-3 flex w-full items-center justify-center gap-2 px-4 py-2 text-sm sm:w-auto"
               >
                 <Copy className="h-4 w-4" /> {copying ? 'Kopierar…' : `Kopiera från ${monthLabel(previousMonthWithData!)}`}
               </button>
@@ -222,7 +222,7 @@ export default function MonthlyView({
       )}
 
       {(showSuggestion || showDeficit || showApplied) && (
-        <section className="card relative overflow-hidden border-sky-400/20 p-5 animate-slide-up">
+        <section className="card relative overflow-hidden border-sky-400/15 p-5 sm:p-6 animate-slide-up">
           <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-sky-400/10 blur-2xl" />
           <div className="flex items-start gap-4">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-400/10 text-sky-400">
@@ -231,7 +231,7 @@ export default function MonthlyView({
             <div className="min-w-0 flex-1">
               {showApplied ? (
                 <>
-                  <h3 className="font-display font-semibold text-emerald-400">
+                  <h3 className="font-display font-semibold text-teal-300">
                     {surplusNotice === 'cut' ? 'Sparande justerat!' : 'Överskott fördelat!'}
                   </h3>
                   <p className="mt-1 text-sm text-slate-400">
@@ -252,14 +252,14 @@ export default function MonthlyView({
                     <button
                       type="button"
                       onClick={applyDeficitCuts}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 transition hover:bg-amber-400 sm:w-auto"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-300/90 px-4 py-2 text-sm font-semibold text-amber-950 transition-all duration-200 hover:bg-amber-200 sm:w-auto"
                     >
                       <PiggyBank className="h-4 w-4" /> Sänk med {formatKr(deficitTotal)}
                     </button>
                     <button
                       type="button"
                       onClick={() => setSurplusNotice('dismissed')}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-400 transition hover:text-slate-200 sm:w-auto"
+                      className="btn-secondary flex w-full items-center justify-center gap-2 sm:w-auto"
                     >
                       <X className="h-4 w-4" /> Inte nu
                     </button>
@@ -275,13 +275,13 @@ export default function MonthlyView({
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                     <button
                       onClick={distributeExcessSurplus}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-sky-950 transition hover:bg-sky-400 sm:w-auto"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-300/90 px-4 py-2 text-sm font-semibold text-sky-950 transition-all duration-200 hover:bg-sky-200 sm:w-auto"
                     >
                       <PiggyBank className="h-4 w-4" /> Fördela {formatKr(boostAmount)}
                     </button>
                     <button
                       onClick={() => setSurplusNotice('dismissed')}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-400 transition hover:text-slate-200 sm:w-auto"
+                      className="btn-secondary flex w-full items-center justify-center gap-2 sm:w-auto"
                     >
                       <X className="h-4 w-4" /> Inte nu
                     </button>
@@ -295,7 +295,7 @@ export default function MonthlyView({
 
       <div className="grid min-w-0 gap-4 sm:grid-cols-3">
         {stats.map((s) => (
-          <div key={s.label} className={`card flex min-w-0 items-center gap-4 p-4 ring-1 ${s.ring} animate-fade-in`}>
+          <div key={s.label} className={`card flex min-w-0 items-center gap-4 p-5 ring-1 sm:p-6 ${s.ring} animate-fade-in`}>
             <span className={`grid h-11 w-11 place-items-center rounded-xl bg-white/5 ${s.color}`}>
               <s.icon className="h-5 w-5" />
             </span>

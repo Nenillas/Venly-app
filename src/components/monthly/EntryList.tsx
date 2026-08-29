@@ -19,10 +19,10 @@ interface Props {
 }
 
 const ACCENTS = {
-  emerald: { text: 'text-emerald-400', dot: 'bg-emerald-400', ring: 'focus:border-emerald-400/60' },
-  sky: { text: 'text-sky-400', dot: 'bg-sky-400', ring: 'focus:border-sky-400/60' },
-  amber: { text: 'text-amber-400', dot: 'bg-amber-400', ring: 'focus:border-amber-400/60' },
-  violet: { text: 'text-teal-300', dot: 'bg-teal-300', ring: 'focus:border-teal-300/60' },
+  emerald: { text: 'text-teal-300', dot: 'bg-teal-400/80', ring: 'focus:border-teal-400/50' },
+  sky: { text: 'text-sky-300', dot: 'bg-sky-400/80', ring: 'focus:border-sky-400/50' },
+  amber: { text: 'text-amber-300', dot: 'bg-amber-400/80', ring: 'focus:border-amber-400/50' },
+  violet: { text: 'text-teal-200', dot: 'bg-teal-300/80', ring: 'focus:border-teal-300/50' },
 };
 
 export default function EntryList({
@@ -58,7 +58,7 @@ export default function EntryList({
   };
 
   return (
-    <section className="card relative z-[1] min-w-0 overflow-x-auto p-4 sm:p-5 animate-fade-in">
+    <section className="card relative z-[1] min-w-0 overflow-x-auto p-5 sm:p-6 animate-fade-in">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/5 ${a.text}`}>
@@ -88,7 +88,7 @@ export default function EntryList({
       <form onSubmit={handleAdd}>
         <button
           type="submit"
-          className="relative z-[1] mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/10 py-2.5 text-sm font-medium text-slate-400 transition hover:border-white/25 hover:text-slate-200"
+          className="relative z-[1] mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/10 py-2.5 text-sm font-medium text-zinc-400 transition-all duration-200 hover:border-white/20 hover:bg-white/[0.03] hover:text-zinc-200"
         >
           <Plus className="h-4 w-4" /> {busy ? 'Lägger till…' : addLabel}
         </button>
@@ -162,12 +162,12 @@ function Row({
 
   return (
     <div
-      className={`group relative flex min-w-0 flex-wrap items-center gap-2 rounded-xl px-1 py-1.5 transition hover:bg-white/5 sm:flex-nowrap sm:px-2 ${
+      className={`group relative flex min-w-0 flex-wrap items-center gap-2 rounded-xl px-1 py-1.5 transition-all duration-200 hover:bg-white/[0.04] sm:flex-nowrap sm:px-2 ${
         typeMenuOpen ? 'z-20' : 'z-0 hover:z-10'
       }`}
     >
       {showType && entry.paid && entry.payment_type === 'invoice' ? (
-        <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-emerald-400 text-emerald-950" title="Betald" aria-label="Betald">
+        <span className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-teal-400/90 text-teal-950 transition-all duration-200" title="Betald" aria-label="Betald">
           <Check className="h-2.5 w-2.5" strokeWidth={3} />
         </span>
       ) : (
@@ -184,7 +184,7 @@ function Row({
         onChange={(e) => setName(e.target.value)}
         onFocus={() => { focused.current = true; }}
         onBlur={() => { focused.current = false; commitName(); }}
-        className={`relative z-[1] min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-slate-200 outline-none transition ${accentRing} focus:bg-black/20`}
+        className={`relative z-[1] min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-zinc-200 outline-none transition-all duration-200 ${accentRing} focus:bg-white/[0.04]`}
       />
       )}
       {showType && (
@@ -206,7 +206,7 @@ function Row({
           onChange={(e) => { if (!carryIn) setAmount(e.target.value); }}
           onFocus={() => { if (!carryIn) focused.current = true; }}
           onBlur={() => { if (!carryIn) { focused.current = false; commitAmount(); } }}
-          className={`relative z-[1] w-[4.5rem] rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-right text-sm tabular-nums text-slate-100 outline-none transition sm:w-24 ${accentRing} ${
+          className={`relative z-[1] w-[4.5rem] rounded-lg border border-white/[0.08] bg-black/15 px-2 py-1 text-right text-sm tabular-nums text-zinc-100 outline-none transition-all duration-200 sm:w-24 ${accentRing} ${
             carryIn ? 'cursor-default text-slate-300' : ''
           }`}
           readOnly={carryIn}
@@ -216,7 +216,7 @@ function Row({
       <button
         type="button"
         onClick={onRequestDelete}
-        className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-slate-600 transition hover:bg-rose-500/10 hover:text-rose-400 ${
+        className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-zinc-600 transition-all duration-200 hover:bg-rose-400/10 hover:text-rose-300 ${
           carryIn ? 'opacity-100' : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100'
         }`}
         aria-label="Ta bort"
@@ -262,7 +262,7 @@ function DeleteConfirmDialog({
           <X className="h-5 w-5" />
         </button>
         <div className="flex items-start gap-3 pr-8">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-rose-500/10 text-rose-400">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-rose-400/10 text-rose-300">
             <Trash2 className="h-5 w-5" />
           </span>
           <div>
@@ -277,7 +277,7 @@ function DeleteConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-slate-100 disabled:opacity-50"
+            className="btn-secondary"
           >
             Avbryt
           </button>
@@ -285,7 +285,7 @@ function DeleteConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-400 disabled:opacity-50"
+            className="btn-danger"
           >
             {busy ? 'Tar bort…' : 'Ta bort'}
           </button>
