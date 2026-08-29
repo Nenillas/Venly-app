@@ -106,7 +106,7 @@ export default function MonthlyView({
     }
   };
 
-  const applySurplus = async (allocations: SurplusAllocation[]) => {
+  const applySurplus = async (allocations: SurplusAllocation[], leftover: number) => {
     const savings = monthEntries
       .filter((e) => e.category === 'savings')
       .map((e) => ({ ...e }));
@@ -134,7 +134,7 @@ export default function MonthlyView({
       }
     }
     await onUpdateMeta(month, {
-      ending_balance: 0,
+      ending_balance: Math.max(0, Math.round(leftover)),
       carried_over_balance: (Number(meta.carried_over_balance) || 0) + allocated,
     });
     setDockedUntil(dockSurplusSection());

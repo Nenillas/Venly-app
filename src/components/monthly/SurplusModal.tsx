@@ -13,7 +13,7 @@ interface Props {
   savingsRows: Entry[];
   onClose: () => void;
   onSaveRules: (patch: Partial<MonthMeta>) => Promise<void>;
-  onApply: (allocations: SurplusAllocation[]) => Promise<void>;
+  onApply: (allocations: SurplusAllocation[], leftover: number) => Promise<void>;
 }
 
 const ICONS = [PiggyBank, TrendingUp, Plane, Target];
@@ -27,7 +27,8 @@ const COLORS = [
 function initialPercents(targets: SavingsTarget[], meta: MonthMeta, usingDefaults: boolean): number[] {
   if (usingDefaults && targets.length === 3) {
     const saved = [meta.alloc_buffer, meta.alloc_avanza, meta.alloc_travel].map((n) => Math.max(0, Math.round(Number(n) || 0)));
-    if (saved.reduce((a, b) => a + b, 0) === 100) return saved;
+    const savedSum = saved.reduce((a, b) => a + b, 0);
+    if (savedSum >= 1 && savedSum <= 100) return saved;
   }
   return splitProportionally(100, savingsSplitWeights(targets));
 }
@@ -41,10 +42,14 @@ export default function SurplusModal({
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
-  const parts = splitProportionally(surplus, percents);
   const sum = percents.reduce((a, b) => a + b, 0);
+  const overLimit = sum > 100;
+  const remainingPct = Math.max(0, 100 - sum);
+  const allocatedKr = overLimit ? 0 : Math.round((surplus * Math.max(0, sum)) / 100);
+  const leftoverKr = Math.max(0, surplus - allocatedKr);
+  const parts = splitProportionally(allocatedKr, percents.map((p) => Math.max(0, p)));
   const livingCosts = totals.expenses;
-  const valid = sum === 100 && surplus > 0 && targets.length > 0;
+  const valid = !overLimit && sum >= 1 && sum <= 100 && surplus > 0 && targets.length > 0 && allocatedKr > 0;
 
   const setPercent = (index: number, value: number) => {
     setPercents((prev) => prev.map((p, i) => (i === index ? value : p)));
@@ -67,6 +72,7 @@ export default function SurplusModal({
           name: t.name,
           amount: parts[i] ?? 0,
         })),
+        leftoverKr,
       );
       setDone(true);
       setTimeout(onClose, 1100);
@@ -95,7 +101,7 @@ export default function SurplusModal({
             <p className="text-sm text-slate-500">
               {usingDefaults
                 ? `Inga sparanderader ännu – förslag enligt ${SAVINGS_TARGETS.buffer}, ${SAVINGS_TARGETS.avanza} och ${SAVINGS_TARGETS.travel}`
-                : 'Fördelas på dina rader under målinriktat sparande'}
+                : 'Fördela upp till 100 % på dina rader under målinriktat sparande. Resten stannar på lönekontot.'}
             </p>
           </div>
         </div>
@@ -144,9 +150,33 @@ export default function SurplusModal({
           })}
         </div>
 
-        <div className={`mt-4 flex items-center justify-between rounded-xl px-4 py-2.5 text-sm ${sum === 100 ? 'bg-white/5 text-slate-400' : 'bg-rose-500/10 text-rose-300'}`}>
-          <span>Summa fördelning</span>
-          <span className="tabular-nums font-semibold">{sum}%</span>
+        <div className="mt-4 space-y-2">
+          <div className={`flex items-center justify-between rounded-xl px-4 py-2.5 text-sm ${overLimit ? 'bg-rose-500/10 text-rose-300' : 'bg-white/5 text-slate-400'}`}>
+            <span>Summa fördelning</span>
+            <span className="tabular-nums font-semibold">{sum}%</span>
+          </div>
+          {overLimit ? (
+            <p className="text-center text-sm text-rose-300">Total fördelning kan inte överstiga 100%.</p>
+          ) : (
+            <>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
+                <div
+                  className="h-full rounded-full bg-emerald-400 transition-all"
+                  style={{ width: `${Math.min(100, Math.max(0, sum))}%` }}
+                />
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-slate-500">
+                <span>
+                  Fördelat till sparande: <b className="tabular-nums text-slate-300">{sum}%</b>
+                  {' '}({formatKr(allocatedKr)})
+                </span>
+                <span>
+                  Kvar på kontot: <b className="tabular-nums text-slate-300">{remainingPct}%</b>
+                  {' '}({formatKr(leftoverKr)})
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         {surplus <= 0 && (
