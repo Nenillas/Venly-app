@@ -4,12 +4,12 @@ import {
   Target, TrendingUp, TrendingDown, PiggyBank, Lightbulb, Check, X,
   Copy,
 } from 'lucide-react';
-import { Category, Entry, MonthMeta, SAVINGS_BUCKETS, isCarryInIncome, CARRY_IN_INCOME_NAME } from '@/lib/types';
-import { amountToBoostSavings, splitProportionally, totalsFor } from '@/lib/calculations';
+import { Category, Entry, MonthMeta, isCarryInIncome, CARRY_IN_INCOME_NAME, resolveSavingsTargets } from '@/lib/types';
+import { amountToBoostSavings, deficitSavingsCuts, splitProportionally, totalsFor } from '@/lib/calculations';
 import { formatKr, monthLabel, addMonths } from '@/lib/format';
 import { dockSurplusSection, readDockedUntil } from '@/lib/surplusPlacement';
 import EntryList from './EntryList';
-import SurplusModal from './SurplusModal';
+import SurplusModal, { type SurplusAllocation } from './SurplusModal';
 import PayrollSurplusSection from './PayrollSurplusSection';
 
 interface Props {
@@ -36,8 +36,9 @@ export default function MonthlyView({
   );
   const meta = getMeta(month);
   const totals = useMemo(() => totalsFor(monthEntries), [monthEntries]);
-  const [surplusNotice, setSurplusNotice] = useState<'idle' | 'applied' | 'dismissed'>('idle');
+  const [surplusNotice, setSurplusNotice] = useState<'idle' | 'applied' | 'cut' | 'dismissed'>('idle');
   const [appliedAmount, setAppliedAmount] = useState(0);
+  const [appliedLabels, setAppliedLabels] = useState('');
   const [dockedUntil, setDockedUntil] = useState(readDockedUntil);
   const surplusAtTop = Date.now() >= dockedUntil;
 
@@ -56,10 +57,16 @@ export default function MonthlyView({
     return [...rows].sort((a, b) => Number(isCarryInIncome(b)) - Number(isCarryInIncome(a)));
   }, [monthEntries]);
 
-  const savingsRows = byCat('savings');
+  const savingsRows = useMemo(
+    () => monthEntries.filter((e) => e.category === 'savings'),
+    [monthEntries],
+  );
   const boostAmount = amountToBoostSavings(totals);
+  const deficitCuts = useMemo(() => deficitSavingsCuts(totals.net, savingsRows), [totals.net, savingsRows]);
+  const deficitTotal = deficitCuts.reduce((a, c) => a + c.reduce, 0);
   const showSuggestion = surplusNotice === 'idle' && boostAmount > 0 && savingsRows.length > 0;
-  const showApplied = surplusNotice === 'applied';
+  const showDeficit = surplusNotice === 'idle' && totals.net < 0 && deficitCuts.length > 0;
+  const showApplied = surplusNotice === 'applied' || surplusNotice === 'cut';
   const showCopyPrompt = monthEntries.length === 0 && previousMonthWithData !== null;
 
   const distributeExcessSurplus = async () => {
@@ -73,7 +80,20 @@ export default function MonthlyView({
       }
     }
     setAppliedAmount(amount);
+    setAppliedLabels(savingsRows.map((r) => r.name.trim()).filter(Boolean).join(', '));
     setSurplusNotice('applied');
+  };
+
+  const applyDeficitCuts = async () => {
+    if (deficitCuts.length === 0) return;
+    for (const cut of deficitCuts) {
+      const row = savingsRows.find((e) => e.id === cut.id);
+      if (!row || cut.reduce <= 0) continue;
+      await onUpdate(row.id, { amount: Math.max(0, row.amount - cut.reduce) });
+    }
+    setAppliedAmount(deficitTotal);
+    setAppliedLabels(deficitCuts.map((c) => c.name).join(', '));
+    setSurplusNotice('cut');
   };
 
   const copyPrevious = async () => {
@@ -86,24 +106,25 @@ export default function MonthlyView({
     }
   };
 
-  const applySurplus = async (amounts: { buffer: number; avanza: number; travel: number }) => {
+  const applySurplus = async (allocations: SurplusAllocation[]) => {
     const savings = monthEntries
       .filter((e) => e.category === 'savings')
       .map((e) => ({ ...e }));
 
-    for (const { key, name, match } of SAVINGS_BUCKETS) {
-      const amt = amounts[key];
-      if (amt <= 0) continue;
-      const existing = savings.find((e) => match.test(e.name));
+    for (const item of allocations) {
+      if (item.amount <= 0) continue;
+      const existing =
+        (item.id && savings.find((e) => e.id === item.id)) ||
+        savings.find((e) => e.name.trim().toLowerCase() === item.name.trim().toLowerCase());
       if (existing) {
-        const next = Number(existing.amount) + amt;
+        const next = Number(existing.amount) + item.amount;
         existing.amount = next;
         await onUpdate(existing.id, { amount: next });
       } else {
-        await onAdd(month, 'savings', name, amt);
+        await onAdd(month, 'savings', item.name, item.amount);
       }
     }
-    const allocated = amounts.buffer + amounts.avanza + amounts.travel;
+    const allocated = allocations.reduce((a, x) => a + Math.max(0, x.amount), 0);
     if (allocated > 0) {
       const existing = monthEntries.find((e) => isCarryInIncome(e));
       if (existing) {
@@ -132,28 +153,28 @@ export default function MonthlyView({
   ];
 
   return (
-    <div className="space-y-6">
-      <header className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between animate-fade-in">
-        <div className="flex items-center gap-2">
+    <div className="w-full min-w-0 space-y-6">
+      <header className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 animate-fade-in">
+        <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
           <button
             type="button"
             onClick={() => { setSurplusNotice('idle'); onMonthChange(addMonths(month, -1)); }}
-            className="grid h-10 w-10 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10">
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10">
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <div className="min-w-[11rem] text-center">
+          <div className="min-w-0 flex-1 text-center sm:min-w-[11rem] sm:flex-none">
             <div className="text-xs uppercase tracking-wide text-slate-500">Månadsöversikt</div>
             <div className="font-display text-lg font-bold capitalize text-slate-50">{monthLabel(month)}</div>
           </div>
           <button
             type="button"
             onClick={() => { setSurplusNotice('idle'); onMonthChange(addMonths(month, 1)); }}
-            className="grid h-10 w-10 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10">
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10">
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
 
-        <div className={`flex items-center gap-3 rounded-2xl px-4 py-2.5 ring-1 ${totals.net >= 0 ? 'bg-emerald-400/5 ring-emerald-400/20' : 'bg-rose-400/5 ring-rose-400/20'}`}>
+        <div className={`flex min-w-0 w-full items-center gap-3 rounded-2xl px-4 py-2.5 ring-1 sm:w-auto ${totals.net >= 0 ? 'bg-emerald-400/5 ring-emerald-400/20' : 'bg-rose-400/5 ring-rose-400/20'}`}>
           {totals.net >= 0 ? <TrendingUp className="h-5 w-5 text-emerald-400" /> : <TrendingDown className="h-5 w-5 text-rose-400" />}
           <div>
             <div className="text-xs text-slate-500">Nettoresultat</div>
@@ -166,6 +187,7 @@ export default function MonthlyView({
       {surplusAtTop && (
         <PayrollSurplusSection
           meta={meta}
+          savingsNames={resolveSavingsTargets(savingsRows).map((t) => t.name)}
           onCommitBalance={(v) => {
             void onUpdateMeta(month, { ending_balance: v }).catch((err) => {
               console.error(err instanceof Error ? err.message : err, err);
@@ -181,7 +203,7 @@ export default function MonthlyView({
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-emerald-400/10 text-emerald-400">
               <Copy className="h-5 w-5" />
             </span>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <h3 className="font-display font-semibold text-emerald-300">Starta 2-minutersrutinen</h3>
               <p className="mt-1 text-sm text-slate-400">
                 {monthLabel(month)} är tom. Kopiera poster och sparfördelning från{' '}
@@ -190,7 +212,7 @@ export default function MonthlyView({
               <button
                 onClick={copyPrevious}
                 disabled={copying}
-                className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:opacity-50"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-400 disabled:opacity-50 sm:w-auto"
               >
                 <Copy className="h-4 w-4" /> {copying ? 'Kopierar…' : `Kopiera från ${monthLabel(previousMonthWithData!)}`}
               </button>
@@ -199,20 +221,49 @@ export default function MonthlyView({
         </section>
       )}
 
-      {(showSuggestion || showApplied) && (
+      {(showSuggestion || showDeficit || showApplied) && (
         <section className="card relative overflow-hidden border-sky-400/20 p-5 animate-slide-up">
           <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-sky-400/10 blur-2xl" />
           <div className="flex items-start gap-4">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-sky-400/10 text-sky-400">
               {showApplied ? <Check className="h-5 w-5" /> : <Lightbulb className="h-5 w-5" />}
             </span>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               {showApplied ? (
                 <>
-                  <h3 className="font-display font-semibold text-emerald-400">Överskott fördelat!</h3>
+                  <h3 className="font-display font-semibold text-emerald-400">
+                    {surplusNotice === 'cut' ? 'Sparande justerat!' : 'Överskott fördelat!'}
+                  </h3>
                   <p className="mt-1 text-sm text-slate-400">
-                    {formatKr(appliedAmount)} har lagts till på dina sparanderader proportionellt.
+                    {surplusNotice === 'cut'
+                      ? `${formatKr(appliedAmount)} har sänkts på ${appliedLabels || 'dina sparanderader'}.`
+                      : `${formatKr(appliedAmount)} har lagts till på ${appliedLabels || 'dina sparanderader'}.`}
                   </p>
+                </>
+              ) : showDeficit ? (
+                <>
+                  <h3 className="font-display font-semibold text-amber-300">Förslag: Sänk sparande vid underskott</h3>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Nettoresultatet är {formatKr(totals.net)}. Förslag utifrån dina rader med saldo:
+                    {' '}
+                    {deficitCuts.map((c) => `${c.name} −${formatKr(c.reduce)}`).join(', ')}.
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <button
+                      type="button"
+                      onClick={applyDeficitCuts}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 transition hover:bg-amber-400 sm:w-auto"
+                    >
+                      <PiggyBank className="h-4 w-4" /> Sänk med {formatKr(deficitTotal)}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSurplusNotice('dismissed')}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-400 transition hover:text-slate-200 sm:w-auto"
+                    >
+                      <X className="h-4 w-4" /> Inte nu
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>
@@ -221,16 +272,16 @@ export default function MonthlyView({
                     Ditt nettoresultat överstiger 10% av inkomsten. {formatKr(boostAmount)} kan flyttas till sparande
                     utan att netto går under 10% eller blir negativt.
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                     <button
                       onClick={distributeExcessSurplus}
-                      className="flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-sky-950 transition hover:bg-sky-400"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-sky-950 transition hover:bg-sky-400 sm:w-auto"
                     >
                       <PiggyBank className="h-4 w-4" /> Fördela {formatKr(boostAmount)}
                     </button>
                     <button
                       onClick={() => setSurplusNotice('dismissed')}
-                      className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-400 transition hover:text-slate-200"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-400 transition hover:text-slate-200 sm:w-auto"
                     >
                       <X className="h-4 w-4" /> Inte nu
                     </button>
@@ -242,21 +293,21 @@ export default function MonthlyView({
         </section>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-3">
         {stats.map((s) => (
-          <div key={s.label} className={`card flex items-center gap-4 p-4 ring-1 ${s.ring} animate-fade-in`}>
+          <div key={s.label} className={`card flex min-w-0 items-center gap-4 p-4 ring-1 ${s.ring} animate-fade-in`}>
             <span className={`grid h-11 w-11 place-items-center rounded-xl bg-white/5 ${s.color}`}>
               <s.icon className="h-5 w-5" />
             </span>
             <div>
               <div className="text-xs text-slate-500">{s.label}</div>
-              <div className={`stat-num text-xl ${s.color}`}>{formatKr(s.value)}</div>
+              <div className={`stat-num min-w-0 truncate text-xl ${s.color}`}>{formatKr(s.value)}</div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
         <EntryList title="Inkomster" hint="Lön, sidoinkomster m.m." accent="emerald"
           icon={<Wallet className="h-5 w-5" />} category="income" month={month}
           entries={incomeEntries} total={sum('income')} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} />
@@ -266,7 +317,7 @@ export default function MonthlyView({
         <EntryList title="Rörliga kostnader" hint="Mat, shopping, nöje" accent="sky"
           icon={<ShoppingBag className="h-5 w-5" />} category="variable" month={month}
           entries={byCat('variable')} total={sum('variable')} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} />
-        <EntryList title="Målinriktat sparande" hint="Avanza, buffert, resekonto" accent="violet"
+        <EntryList title="Målinriktat sparande" hint="Dina sparanderader – överskott fördelas på dessa" accent="violet"
           icon={<Target className="h-5 w-5" />} category="savings" month={month}
           entries={byCat('savings')} total={sum('savings')} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} />
       </div>
@@ -274,6 +325,7 @@ export default function MonthlyView({
       {!surplusAtTop && (
         <PayrollSurplusSection
           meta={meta}
+          savingsNames={resolveSavingsTargets(savingsRows).map((t) => t.name)}
           onCommitBalance={(v) => {
             void onUpdateMeta(month, { ending_balance: v }).catch((err) => {
               console.error(err instanceof Error ? err.message : err, err);
@@ -288,6 +340,7 @@ export default function MonthlyView({
           meta={meta}
           totals={totals}
           surplus={modalSurplus}
+          savingsRows={savingsRows}
           onClose={() => setModalOpen(false)}
           onSaveRules={(patch) => onUpdateMeta(month, patch)}
           onApply={applySurplus}

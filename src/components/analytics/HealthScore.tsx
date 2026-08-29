@@ -53,7 +53,7 @@ export default function HealthScore({ score }: { score: Score }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="card w-full p-6 text-left animate-slide-up transition hover:border-white/10"
+        className="card w-full min-w-0 p-4 text-left animate-slide-up transition hover:border-white/10 sm:p-6"
       >
         <div className="flex items-center justify-between gap-2 text-slate-300">
           <span className="flex items-center gap-2">
@@ -94,7 +94,7 @@ export default function HealthScore({ score }: { score: Score }) {
               return (
                 <div key={m.key}>
                   <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2 text-slate-300">
+                    <span className="flex min-w-0 items-center gap-2 text-slate-300">
                       <m.icon className="h-4 w-4 text-slate-500" /> {m.label}
                     </span>
                     <span className={`tabular-nums font-semibold ${mc.text}`}>{pts}/{max}p</span>
@@ -129,7 +129,7 @@ function HealthScoreModal({ score, onClose }: { score: Score; onClose: () => voi
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="health-score-title">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-      <div className="relative w-full max-w-lg card p-6 animate-scale-in">
+      <div className="relative max-h-[min(90vh,90dvh)] w-full max-w-lg overflow-y-auto overflow-x-hidden card p-4 sm:p-6 animate-scale-in">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-slate-200"

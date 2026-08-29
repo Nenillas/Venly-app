@@ -62,22 +62,22 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden">
       <header className="sticky top-0 z-30 isolate border-b border-white/5 bg-ink-950">
-        <div className="pointer-events-auto mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
-          <div className="flex items-center gap-3">
+        <div className="page-shell pointer-events-auto flex items-center justify-between gap-2 py-3.5 sm:gap-4">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <VenlyLogo size={40} />
-            <div>
+            <div className="min-w-0">
               <h1 className="font-display text-lg font-bold leading-none text-slate-50">
                 Ven<span className="text-emerald-400">ly</span>
               </h1>
-              <p className="mt-0.5 text-xs text-slate-500">Smartare kontroll över din ekonomi</p>
+              <p className="mt-0.5 hidden truncate text-xs text-slate-500 sm:block">Smartare kontroll över din ekonomi</p>
             </div>
           </div>
           <UserMenu user={user} onSignOut={signOut} />
         </div>
 
-        <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 sm:px-6">
+        <nav className="page-shell flex gap-1 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((t) => {
             const active = tab === t.id;
             return (
@@ -85,9 +85,9 @@ function App() {
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`relative flex items-center gap-2 px-3 py-3 text-sm font-medium transition sm:px-4 ${active ? 'text-emerald-400' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`relative flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium transition sm:px-4 ${active ? 'text-emerald-400' : 'text-slate-400 hover:text-slate-200'}`}
               >
-                <t.icon className="h-4 w-4" />
+                <t.icon className="h-4 w-4 shrink-0" />
                 <span className="hidden sm:inline">{t.label}</span>
                 {active && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-emerald-400" />}
               </button>
@@ -96,7 +96,7 @@ function App() {
         </nav>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+      <main className="page-shell relative z-10 py-6 sm:py-8">
         {finance.error && (
           <div className="mb-4 rounded-xl border border-rose-400/20 bg-rose-400/10 px-4 py-3 text-sm text-rose-300">
             {finance.error}
@@ -144,7 +144,7 @@ function App() {
         )}
       </main>
 
-      <footer className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-4 pb-8 pt-4 text-xs text-slate-600 sm:px-6">
+      <footer className="page-shell flex flex-wrap items-center justify-center gap-2 pb-8 pt-4 text-center text-xs text-slate-600">
         <VenlyLogo size={32} />
         <span>Venly · Smartare kontroll över din ekonomi.</span>
       </footer>

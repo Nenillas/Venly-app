@@ -1,16 +1,25 @@
 import { useEffect, useId, useState } from 'react';
 import { Sparkles } from 'lucide-react';
-import { MonthMeta } from '@/lib/types';
+import { MonthMeta, SAVINGS_BUCKETS } from '@/lib/types';
 import { formatKr } from '@/lib/format';
 
 interface Props {
   meta: MonthMeta;
+  savingsNames: string[];
   onCommitBalance: (value: number) => void;
   onOpenModal: () => void;
 }
 
+function formatSavingsList(names: string[]): string {
+  const unique = names.map((n) => n.trim()).filter(Boolean);
+  if (unique.length === 0) return formatSavingsList(SAVINGS_BUCKETS.map((b) => b.name));
+  if (unique.length === 1) return unique[0];
+  if (unique.length === 2) return `${unique[0]} och ${unique[1]}`;
+  return `${unique.slice(0, -1).join(', ')} och ${unique[unique.length - 1]}`;
+}
+
 export default function PayrollSurplusSection({
-  meta, onCommitBalance, onOpenModal,
+  meta, savingsNames, onCommitBalance, onOpenModal,
 }: Props) {
   const inputId = useId();
   const [value, setValue] = useState(String(meta.ending_balance ?? 0));
@@ -27,7 +36,7 @@ export default function PayrollSurplusSection({
   };
 
   return (
-    <section className="card relative z-[1] grid gap-5 p-5 md:grid-cols-2 animate-fade-in">
+    <section className="card relative z-[1] grid min-w-0 gap-5 p-4 sm:p-5 md:grid-cols-2 animate-fade-in">
       <div>
         <label htmlFor={inputId} className="text-sm font-medium text-slate-300">
           Kvar på lönekontot vid nästa lön
@@ -63,12 +72,12 @@ export default function PayrollSurplusSection({
           <h3 className="font-display font-semibold">Verkställ Överskott</h3>
         </div>
         <p className="mt-1 text-sm text-slate-400">
-          Fördela automatiskt <b className="text-emerald-400">{formatKr(Math.max(0, meta.ending_balance))}</b> mellan buffert, Avanza och resekonto.
+          Fördela automatiskt <b className="text-emerald-400">{formatKr(Math.max(0, meta.ending_balance))}</b> mellan {formatSavingsList(savingsNames)}.
         </p>
         <button
           type="button"
           onClick={onOpenModal}
-          className="relative z-[1] mt-4 self-start rounded-xl bg-emerald-500 px-5 py-2.5 font-semibold text-emerald-950 transition hover:bg-emerald-400"
+          className="relative z-[1] mt-4 w-full rounded-xl bg-emerald-500 px-5 py-2.5 font-semibold text-emerald-950 transition hover:bg-emerald-400 sm:w-auto sm:self-start"
         >
           Verkställ Överskott
         </button>

@@ -56,6 +56,7 @@ export type Database = {
         Row: {
           id: string;
           user_id: string;
+          monthly_record_id: string | null;
           month: string;
           category: string;
           name: string;
@@ -68,6 +69,7 @@ export type Database = {
         Insert: {
           id?: string;
           user_id: string;
+          monthly_record_id?: string | null;
           month: string;
           category: string;
           name: string;
@@ -80,6 +82,7 @@ export type Database = {
         Update: {
           id?: string;
           user_id?: string;
+          monthly_record_id?: string | null;
           month?: string;
           category?: string;
           name?: string;

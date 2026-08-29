@@ -9,7 +9,8 @@ import { formatKr, formatPercent, monthLabel } from './format';
  */
 export const INSIGHT_SYSTEM_MESSAGE = `Du analyserar en användares månadsbudget.
 Fältet carried_over_balance är ingående saldo / överförda medel: "Kvar på lönekontot vid nästa lön".
-Det är startbalansen som rullas över till månaden, inte nettoresultatet.`;
+Det är startbalansen som rullas över till månaden, inte nettoresultatet.
+Standardnamn för målinriktat sparande (när användaren inte har egna rader) är Buffert, Investeringar och Resekonto.`;
 
 export type InsightPayload = {
   month: string;
@@ -28,8 +29,8 @@ export function generateInsight(payload: InsightPayload): string[] {
     data: { carried_over_balance, ending_balance },
   };
   const monthEntries = byMonth.get(month) ?? [];
-  const cur = totalsFor(monthEntries);
-  const score = healthScore(monthEntries, prompt.data.carried_over_balance);
+  const cur = totalsFor(monthEntries, 'operational');
+  const score = healthScore(monthEntries, prompt.data.carried_over_balance, 'operational');
   if (cur.income === 0 && cur.expenses === 0) {
     return [
       `Det finns ännu inga poster för ${monthLabel(month)}.`,
@@ -39,7 +40,7 @@ export function generateInsight(payload: InsightPayload): string[] {
   }
 
   const past = months.filter((m) => m < month);
-  const avg = averageTotals(past.map((m) => totalsFor(byMonth.get(m) ?? [])));
+  const avg = averageTotals(past.map((m) => totalsFor(byMonth.get(m) ?? [], 'operational')));
 
   const sentences: string[] = [];
 

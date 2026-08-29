@@ -7,6 +7,8 @@
     -webkit-font-smoothing: antialiased;
     min-height: 100%;
     min-height: 100dvh;
+    overflow-x: hidden;
+    max-width: 100%;
   }
   body {
     @apply bg-ink-950 text-slate-100 font-sans;
@@ -15,6 +17,7 @@
     margin: 0;
     overflow-x: hidden;
     overflow-y: auto;
+    max-width: 100%;
     background-image:
       radial-gradient(60rem 60rem at 85% -10%, rgba(16, 185, 129, 0.10), transparent 60%),
       radial-gradient(50rem 50rem at 0% 0%, rgba(56, 189, 248, 0.08), transparent 55%);
@@ -24,6 +27,8 @@
     min-height: 100%;
     min-height: 100dvh;
     isolation: isolate;
+    max-width: 100%;
+    overflow-x: hidden;
   }
   input, button, select, textarea {
     pointer-events: auto;
@@ -36,6 +41,9 @@
   }
   .stat-num {
     @apply font-display tabular-nums tracking-tight;
+  }
+  .page-shell {
+    @apply mx-auto w-full min-w-0 max-w-6xl px-4 sm:px-6 lg:px-8;
   }
 }
 

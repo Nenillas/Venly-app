@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Trash2, Check, Repeat, CreditCard, ChevronDown, FileText, HelpCircle } from 'lucide-react';
-import { Category, Entry, isCarryInIncome, CARRY_IN_INCOME_HELP, CARRY_IN_INCOME_NAME, isExpense, PAYMENT_TYPE_LABELS, PAYMENT_TYPES, PaymentType } from '@/lib/types';
+import { Plus, Trash2, Check, Repeat, CreditCard, ChevronDown, FileText, HelpCircle, X } from 'lucide-react';
+import { Category, CATEGORY_LABELS, Entry, isCarryInIncome, CARRY_IN_INCOME_HELP, CARRY_IN_INCOME_NAME, canonicalItemName, isExpense, PAYMENT_TYPE_LABELS, PAYMENT_TYPES, PaymentType } from '@/lib/types';
 import { formatKr } from '@/lib/format';
 
 interface Props {
@@ -32,6 +32,8 @@ export default function EntryList({
   const a = ACCENTS[accent];
   const [busy, setBusy] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Entry | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const defaultName =
     category === 'income' ? 'Ny inkomst' :
     category === 'savings' ? 'Nytt sparande' : 'Ny kostnad';
@@ -56,18 +58,18 @@ export default function EntryList({
   };
 
   return (
-    <section className="card relative z-[1] p-5 animate-fade-in">
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="flex items-center gap-3">
-          <span className={`grid h-9 w-9 place-items-center rounded-xl bg-white/5 ${a.text}`}>
+    <section className="card relative z-[1] min-w-0 overflow-x-auto p-4 sm:p-5 animate-fade-in">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/5 ${a.text}`}>
             {icon}
           </span>
-          <div>
+          <div className="min-w-0">
             <h3 className="font-display text-base font-semibold text-slate-100">{title}</h3>
             <p className="text-xs text-slate-500">{hint}</p>
           </div>
         </div>
-        <div className="text-right">
+        <div className="shrink-0 text-right">
           <div className={`stat-num text-lg ${a.text}`}>{formatKr(total)}</div>
           <div className="text-[11px] text-slate-500">totalt</div>
         </div>
@@ -79,7 +81,7 @@ export default function EntryList({
         )}
         {entries.map((e) => (
           <Row key={e.id} entry={e} accentRing={a.ring} dot={a.dot}
-            onUpdate={onUpdate} onDelete={onDelete} />
+            onUpdate={onUpdate} onRequestDelete={() => setPendingDelete(e)} />
         ))}
       </div>
 
@@ -94,18 +96,36 @@ export default function EntryList({
       {addError && (
         <p className="mt-2 text-center text-xs text-rose-300">{addError}</p>
       )}
+      {pendingDelete && (
+        <DeleteConfirmDialog
+          entry={pendingDelete}
+          busy={deleting}
+          onCancel={() => { if (!deleting) setPendingDelete(null); }}
+          onConfirm={async () => {
+            setDeleting(true);
+            try {
+              await onDelete(pendingDelete.id);
+              setPendingDelete(null);
+            } catch (err) {
+              console.error(err instanceof Error ? err.message : err, err);
+            } finally {
+              setDeleting(false);
+            }
+          }}
+        />
+      )}
     </section>
   );
 }
 
 function Row({
-  entry, accentRing, dot, onUpdate, onDelete,
+  entry, accentRing, dot, onUpdate, onRequestDelete,
 }: {
   entry: Entry;
   accentRing: string;
   dot: string;
   onUpdate: Props['onUpdate'];
-  onDelete: Props['onDelete'];
+  onRequestDelete: () => void;
 }) {
   const [name, setName] = useState(entry.name);
   const [amount, setAmount] = useState(String(entry.amount));
@@ -119,7 +139,8 @@ function Row({
   }, [entry.id, entry.name, entry.amount]);
 
   const commitName = () => {
-    const v = name.trim() || 'Namnlös';
+    const v = canonicalItemName(entry.category, name.trim() || 'Namnlös');
+    if (v !== name.trim()) setName(v);
     if (v !== entry.name) {
       void onUpdate(entry.id, { name: v }).catch((err) => {
         console.error(err instanceof Error ? err.message : err, err);
@@ -141,7 +162,7 @@ function Row({
 
   return (
     <div
-      className={`group relative flex items-center gap-2 rounded-xl px-2 py-1.5 transition hover:bg-white/5 ${
+      className={`group relative flex min-w-0 flex-wrap items-center gap-2 rounded-xl px-1 py-1.5 transition hover:bg-white/5 sm:flex-nowrap sm:px-2 ${
         typeMenuOpen ? 'z-20' : 'z-0 hover:z-10'
       }`}
     >
@@ -177,7 +198,7 @@ function Row({
           }}
         />
       )}
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1">
         <input
           type="text"
           inputMode="numeric"
@@ -185,28 +206,93 @@ function Row({
           onChange={(e) => { if (!carryIn) setAmount(e.target.value); }}
           onFocus={() => { if (!carryIn) focused.current = true; }}
           onBlur={() => { if (!carryIn) { focused.current = false; commitAmount(); } }}
-          className={`relative z-[1] w-24 rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-right text-sm tabular-nums text-slate-100 outline-none transition ${accentRing} ${
+          className={`relative z-[1] w-[4.5rem] rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-right text-sm tabular-nums text-slate-100 outline-none transition sm:w-24 ${accentRing} ${
             carryIn ? 'cursor-default text-slate-300' : ''
           }`}
           readOnly={carryIn}
         />
         <span className="pointer-events-none text-xs text-slate-500">kr</span>
       </div>
-      {!carryIn && (
       <button
         type="button"
-        onClick={() => {
-          void onDelete(entry.id).catch((err) => {
-            console.error(err instanceof Error ? err.message : err, err);
-          });
-        }}
-        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-slate-600 opacity-0 transition hover:bg-rose-500/10 hover:text-rose-400 group-hover:opacity-100"
+        onClick={onRequestDelete}
+        className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-slate-600 transition hover:bg-rose-500/10 hover:text-rose-400 ${
+          carryIn ? 'opacity-100' : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100'
+        }`}
         aria-label="Ta bort"
       >
         <Trash2 className="h-4 w-4" />
       </button>
-      )}
     </div>
+  );
+}
+
+function DeleteConfirmDialog({
+  entry,
+  busy,
+  onCancel,
+  onConfirm,
+}: {
+  entry: Entry;
+  busy: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const label = entry.name.trim() || CATEGORY_LABELS[entry.category];
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !busy) onCancel();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [busy, onCancel]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="alertdialog" aria-modal="true" aria-labelledby="delete-row-title" aria-describedby="delete-row-desc">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={() => { if (!busy) onCancel(); }} />
+      <div className="relative w-full max-w-md card p-6 animate-scale-in">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={busy}
+          className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-slate-200 disabled:opacity-50"
+          aria-label="Avbryt"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        <div className="flex items-start gap-3 pr-8">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-rose-500/10 text-rose-400">
+            <Trash2 className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 id="delete-row-title" className="font-display text-xl font-bold text-slate-50">Ta bort rad?</h2>
+            <p id="delete-row-desc" className="mt-2 text-sm leading-relaxed text-slate-400">
+              Är du säker på att du vill ta bort <span className="font-medium text-slate-200">{label}</span>? Denna åtgärd går inte att ångra.
+            </p>
+          </div>
+        </div>
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={busy}
+            className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-slate-100 disabled:opacity-50"
+          >
+            Avbryt
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={busy}
+            className="rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-400 disabled:opacity-50"
+          >
+            {busy ? 'Tar bort…' : 'Ta bort'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -345,10 +431,10 @@ function PaymentTypePicker({
           setMenuPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
           setMenuOpen(!open);
         }}
-        className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold transition ${style.btn}`}
+        className={`flex items-center gap-1 rounded-full px-1.5 py-1 text-[11px] font-semibold transition sm:px-2 ${style.btn}`}
       >
-        <Icon className="h-3 w-3" />
-        {PAYMENT_TYPE_LABELS[value]}
+        <Icon className="h-3 w-3 shrink-0" />
+        <span className="hidden sm:inline">{PAYMENT_TYPE_LABELS[value]}</span>
         <ChevronDown className={`h-3 w-3 opacity-70 transition ${open ? 'rotate-180' : ''}`} />
       </button>
       {open &&

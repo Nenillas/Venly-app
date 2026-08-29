@@ -99,7 +99,7 @@ BEGIN
   INSERT INTO public.finance_entries (user_id, month, category, name, amount)
   VALUES
     (NEW.id, m, 'savings', 'Buffert', 0),
-    (NEW.id, m, 'savings', 'Avanza/Nordnet', 0),
+    (NEW.id, m, 'savings', 'Investeringar', 0),
     (NEW.id, m, 'savings', 'Resekonto', 0);
 
   RETURN NEW;

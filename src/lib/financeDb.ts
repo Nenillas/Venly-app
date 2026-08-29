@@ -1,9 +1,46 @@
 import { requireSupabase } from '@/lib/supabase/client';
-import { Category, Entry, MonthMeta, PaymentType } from '@/lib/types';
+import { Category, Entry, MonthMeta, PaymentType, canonicalItemName } from '@/lib/types';
 import { logSupabaseError } from '@/lib/supabaseErrors';
 
 export const MONTHS_TABLE = 'monthly_records' as const;
 export const ENTRIES_TABLE = 'budget_items' as const;
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const UUID_KEYS = new Set(['id', 'user_id', 'monthly_record_id', 'month_id']);
+
+export function isUuid(value: unknown): value is string {
+  return typeof value === 'string' && UUID_RE.test(value.trim());
+}
+
+/** Empty string and invalid UUIDs must not be sent to Postgres uuid columns. */
+export function asUuidOrNull(value: unknown): string | null {
+  if (value == null) return null;
+  const s = String(value).trim();
+  if (!s) return null;
+  return isUuid(s) ? s : null;
+}
+
+export function omitInvalidUuids(payload: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(payload)) {
+    const isUuidField = UUID_KEYS.has(key) || key.endsWith('_id');
+    if (!isUuidField) {
+      if (value === undefined) continue;
+      out[key] = value;
+      continue;
+    }
+    if (key === 'user_id') {
+      const uid = asUuidOrNull(value);
+      if (uid) out.user_id = uid;
+      continue;
+    }
+    if (value === undefined) continue;
+    out[key] = asUuidOrNull(value);
+  }
+  return out;
+}
 
 export const MONTHS_TABLES = [MONTHS_TABLE] as const;
 export const ENTRIES_TABLES = [ENTRIES_TABLE] as const;
@@ -33,6 +70,9 @@ export async function queryUserRows(
   userId: string,
   orderColumn?: string,
 ): Promise<{ table: string; data: Record<string, unknown>[] }> {
+  if (!isUuid(userId)) {
+    throw new Error('Saknar giltigt användar-id.');
+  }
   const from = () => requireSupabase().from(table);
   let { data, error } = orderColumn
     ? await from().select('*').eq('user_id', userId).order(orderColumn)
@@ -86,11 +126,12 @@ export function parsePaymentType(row: Record<string, unknown>): PaymentType {
 }
 
 export function normalizeEntry(row: Record<string, unknown>): Entry {
+  const category = row.category as Category;
   return {
     id: String(row.id ?? ''),
     month: monthKeyFromRow(row),
-    category: row.category as Category,
-    name: String(row.name ?? row.title ?? ''),
+    category,
+    name: canonicalItemName(category, String(row.name ?? row.title ?? '')),
     amount: Number(row.amount) || 0,
     paid: Boolean(row.paid ?? row.is_paid),
     payment_type: parsePaymentType(row),
@@ -104,14 +145,45 @@ export function entryWritePayload(input: {
   name: string;
   amount: number;
   payment_type?: PaymentType;
+  monthlyRecordId?: string | null;
 }): Record<string, unknown> {
+  const user_id = asUuidOrNull(input.userId);
+  if (!user_id) {
+    throw new Error('Saknar giltigt användar-id — kan inte spara till databasen.');
+  }
   const payload: Record<string, unknown> = {
-    user_id: input.userId,
+    user_id,
     month: input.month,
     category: input.category,
-    name: input.name,
+    name: canonicalItemName(input.category, input.name),
     amount: input.amount,
   };
+  const monthlyRecordId = asUuidOrNull(input.monthlyRecordId);
+  if (monthlyRecordId) payload.monthly_record_id = monthlyRecordId;
   if (input.payment_type) payload.payment_type = input.payment_type;
-  return payload;
+  return omitInvalidUuids(payload);
+}
+
+export function monthWritePayload(input: {
+  userId: string;
+  month: string;
+  ending_balance?: number;
+  carried_over_balance?: number;
+  alloc_buffer?: number;
+  alloc_avanza?: number;
+  alloc_travel?: number;
+}): Record<string, unknown> {
+  const user_id = asUuidOrNull(input.userId);
+  if (!user_id) {
+    throw new Error('Saknar giltigt användar-id — kan inte spara till databasen.');
+  }
+  return omitInvalidUuids({
+    user_id,
+    month: input.month,
+    ending_balance: input.ending_balance,
+    carried_over_balance: input.carried_over_balance,
+    alloc_buffer: input.alloc_buffer,
+    alloc_avanza: input.alloc_avanza,
+    alloc_travel: input.alloc_travel,
+  });
 }

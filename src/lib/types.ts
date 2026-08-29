@@ -40,6 +40,12 @@ export function isExpense(category: Category): boolean {
   return category === 'fixed' || category === 'variable';
 }
 
+export type SavingsTarget = {
+  id: string | null;
+  name: string;
+  amount: number;
+};
+
 export const CARRY_IN_INCOME_NAME = 'Ingående balans';
 
 export const CARRY_IN_INCOME_HELP =
@@ -51,12 +57,40 @@ export function isCarryInIncome(entry: Pick<Entry, 'category' | 'name'>): boolea
 
 export const SAVINGS_TARGETS = {
   buffer: 'Buffert',
-  avanza: 'Avanza/Nordnet',
+  avanza: 'Investeringar',
   travel: 'Resekonto',
 } as const;
 
+/** Broker titles from earlier default templates — shown and stored as Investeringar. */
+export const LEGACY_INVESTMENT_TITLE = /^(avanza\/nordnet|avanza|nordnet)$/i;
+
+export function isLegacyInvestmentTitle(name: string): boolean {
+  return LEGACY_INVESTMENT_TITLE.test(name.trim());
+}
+
+export function canonicalItemName(category: Category, name: string): string {
+  const trimmed = name.trim();
+  if (category === 'savings' && isLegacyInvestmentTitle(trimmed)) {
+    return SAVINGS_TARGETS.avanza;
+  }
+  return trimmed;
+}
+
 export const SAVINGS_BUCKETS = [
   { key: 'buffer', name: SAVINGS_TARGETS.buffer, match: /buffert/i },
-  { key: 'avanza', name: SAVINGS_TARGETS.avanza, match: /avanza|nordnet/i },
+  { key: 'avanza', name: SAVINGS_TARGETS.avanza, match: /investering|avanza|nordnet/i },
   { key: 'travel', name: SAVINGS_TARGETS.travel, match: /rese/i },
 ] as const;
+
+/** Active målinriktat sparande rows, or the three default buckets if none exist. */
+export function resolveSavingsTargets(savingsRows: Entry[]): SavingsTarget[] {
+  const rows = savingsRows
+    .filter((e) => e.category === 'savings' && e.name.trim())
+    .map((e) => ({
+      id: e.id,
+      name: canonicalItemName('savings', e.name),
+      amount: Number(e.amount) || 0,
+    }));
+  if (rows.length > 0) return rows;
+  return SAVINGS_BUCKETS.map((b) => ({ id: null, name: b.name, amount: 0 }));
+}

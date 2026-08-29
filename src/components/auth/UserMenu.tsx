@@ -20,7 +20,7 @@ export default function UserMenu({ user, onSignOut }: { user: AuthUser; onSignOu
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex max-w-[16rem] items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10"
+        className="flex max-w-[min(16rem,calc(100vw-2rem))] items-center gap-2 rounded-xl bg-white/5 px-2 py-2 text-left text-sm text-slate-300 transition hover:bg-white/10 sm:max-w-[16rem] sm:px-3"
         aria-expanded={open}
       >
         <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-emerald-400/10 text-emerald-400">
@@ -30,7 +30,7 @@ export default function UserMenu({ user, onSignOut }: { user: AuthUser; onSignOu
         <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
       </button>
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-64 rounded-xl border border-white/10 bg-ink-900 p-2 shadow-xl shadow-black/40 animate-scale-in">
+        <div className="absolute right-0 z-50 mt-2 w-64 max-w-[calc(100vw-1.5rem)] rounded-xl border border-white/10 bg-ink-900 p-2 shadow-xl shadow-black/40 animate-scale-in">
           <div className="truncate px-3 py-2 text-xs text-slate-500">{email}</div>
           <button
             type="button"

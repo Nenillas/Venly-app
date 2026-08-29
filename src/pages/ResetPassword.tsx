@@ -176,7 +176,7 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
+    <div className="flex min-h-screen w-full max-w-full flex-col items-center justify-center overflow-x-hidden px-4 py-10">
       <div className="mb-8 flex items-center gap-3">
         <VenlyLogo size={40} />
         <div>

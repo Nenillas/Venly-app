@@ -22,6 +22,17 @@ function paymentAmount(entry: Entry): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function compareByCategoryAndName(a: Entry, b: Entry) {
+  return a.category.localeCompare(b.category) || a.name.localeCompare(b.name, 'sv');
+}
+
+function compareChecklist(a: Entry, b: Entry) {
+  const aPaid = Boolean(a.paid);
+  const bPaid = Boolean(b.paid);
+  if (aPaid !== bPaid) return aPaid ? 1 : -1;
+  return compareByCategoryAndName(a, b);
+}
+
 function isPositiveCost(entry: Entry, month: string): boolean {
   return (
     entry.month === month &&
@@ -38,17 +49,18 @@ export function isBetalningarItem(entry: Entry, month: string): boolean {
 export default function PaymentsView({ month, onMonthChange, entries, onTogglePaid }: Props) {
   const [otherOpen, setOtherOpen] = useState(false);
 
-  const { bills, autogiro, cards } = useMemo(() => {
-    const sortItems = (a: Entry, b: Entry) =>
-      a.category.localeCompare(b.category) || a.name.localeCompare(b.name, 'sv');
+  const { bills, unpaidBills, paidBills, autogiro, cards } = useMemo(() => {
+    const bills = entries.filter((e) => isBetalningarItem(e, month)).sort(compareChecklist);
     return {
-      bills: entries.filter((e) => isBetalningarItem(e, month)).sort(sortItems),
+      bills,
+      unpaidBills: bills.filter((e) => !e.paid),
+      paidBills: bills.filter((e) => e.paid),
       autogiro: entries
         .filter((e) => isPositiveCost(e, month) && e.payment_type === 'autogiro')
-        .sort(sortItems),
+        .sort(compareByCategoryAndName),
       cards: entries
         .filter((e) => isPositiveCost(e, month) && e.payment_type === 'card_pot')
-        .sort(sortItems),
+        .sort(compareByCategoryAndName),
     };
   }, [entries, month]);
 
@@ -61,22 +73,22 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
   const pct = total === 0 ? 0 : Math.round((paidCount / total) * 100);
 
   return (
-    <div className="space-y-6">
-      <header className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between animate-fade-in">
-        <div className="flex items-center gap-2">
+    <div className="w-full min-w-0 space-y-6">
+      <header className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 animate-fade-in">
+        <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
           <button
             onClick={() => onMonthChange(addMonths(month, -1))}
-            className="grid h-10 w-10 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <div className="min-w-[11rem] text-center">
+          <div className="min-w-0 flex-1 text-center sm:min-w-[11rem] sm:flex-none">
             <div className="text-xs uppercase tracking-wide text-slate-500">Betalningar</div>
             <div className="font-display text-lg font-bold capitalize text-slate-50">{monthLabel(month)}</div>
           </div>
           <button
             onClick={() => onMonthChange(addMonths(month, 1))}
-            className="grid h-10 w-10 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300 transition hover:bg-white/10"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -116,7 +128,15 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
         </div>
       ) : (
         <ul className="space-y-2">
-          {bills.map((bill) => (
+          {unpaidBills.map((bill) => (
+            <BillRow key={bill.id} bill={bill} onToggle={onTogglePaid} />
+          ))}
+          {paidBills.length > 0 && unpaidBills.length > 0 && (
+            <li className="list-none px-1 pt-3 pb-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+              Betalda
+            </li>
+          )}
+          {paidBills.map((bill) => (
             <BillRow key={bill.id} bill={bill} onToggle={onTogglePaid} />
           ))}
         </ul>
@@ -196,7 +216,7 @@ function OtherTypeList({
         {items.map((item) => (
           <li key={item.id} className="flex items-center gap-3 rounded-xl px-2 py-2.5">
             <div className="min-w-0 flex-1">
-              <div className="font-medium text-slate-300">{item.name}</div>
+              <div className="truncate font-medium text-slate-300">{item.name}</div>
               <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${TAG[item.category as 'fixed' | 'variable']}`}>
                   {CATEGORY_LABELS[item.category]}
@@ -225,11 +245,11 @@ function BillRow({
   const tagClass = TAG[bill.category as 'fixed' | 'variable'];
 
   return (
-    <li>
+    <li className="transition-all duration-300 ease-out">
       <button
         type="button"
         onClick={() => onToggle(bill.id, !paid)}
-        className={`card flex w-full items-center gap-3 p-4 text-left transition ${
+        className={`card flex w-full min-w-0 items-center gap-3 p-4 text-left transition-all duration-300 ${
           paid ? 'opacity-60' : 'hover:border-white/10'
         }`}
       >
@@ -243,7 +263,7 @@ function BillRow({
           {paid && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
         </span>
         <div className="min-w-0 flex-1">
-          <div className={`font-medium ${paid ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
+          <div className={`font-medium truncate ${paid ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
             {bill.name}
           </div>
           <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${tagClass}`}>

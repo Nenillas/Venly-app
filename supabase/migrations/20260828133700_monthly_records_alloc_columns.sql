@@ -1,6 +1,6 @@
 -- monthly_records surplus allocation columns
--- Categories in the app: SAVINGS_BUCKETS → buffer, avanza, travel
--- (alloc_buffer, alloc_avanza, alloc_travel). No other alloc_* keys exist in code.
+-- Categories in the app: SAVINGS_BUCKETS → buffer, investments, travel
+-- (alloc_buffer, alloc_avanza, alloc_travel). alloc_avanza is the Investeringar share.
 
 ALTER TABLE public.monthly_records
   ADD COLUMN IF NOT EXISTS alloc_buffer NUMERIC DEFAULT 0;

@@ -7,7 +7,7 @@
      - `month` (text, unik – format "YYYY-MM")
      - `ending_balance` (numeric – kvar på lönekontot vid nästa lön)
      - `alloc_buffer` (int – procent till buffert)
-     - `alloc_avanza` (int – procent till Avanza/Nordnet)
+     - `alloc_avanza` (int – procent till Investeringar)
      - `alloc_travel` (int – procent till resekonto)
      - `created_at` (timestamptz)
    - `finance_entries` (poster: inkomster/kostnader/sparande)

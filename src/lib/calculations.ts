@@ -1,4 +1,4 @@
-import { Entry, MonthMeta } from './types';
+import { canonicalItemName, isCarryInIncome, type Entry, type MonthMeta } from './types';
 
 export interface MonthTotals {
   income: number;
@@ -11,15 +11,36 @@ export interface MonthTotals {
   savingsRate: number; // savings / income (0-1)
 }
 
-export function totalsFor(entries: Entry[]): MonthTotals {
-  const sum = (cat: string) =>
-    entries.filter((e) => e.category === cat).reduce((a, e) => a + e.amount, 0);
+/** Ingående balans booked as income for a month (Verkställ överskott). */
+export function carryInIncomeAmount(entries: Entry[]): number {
+  return entries
+    .filter((e) => isCarryInIncome(e))
+    .reduce((a, e) => a + Math.max(0, Number(e.amount) || 0), 0);
+}
 
-  const income = sum('income');
+export type TotalsMode = 'ledger' | 'operational';
+
+/**
+ * `ledger`: all budget rows, including Ingående balans (keeps month view net-neutral after Verkställ).
+ * `operational`: actual earned income — Ingående balans is removed from income and the same
+ * amount from savings so net/cash-flow stay consistent.
+ */
+export function totalsFor(entries: Entry[], mode: TotalsMode = 'ledger'): MonthTotals {
+  const sum = (cat: string) =>
+    entries.filter((e) => e.category === cat).reduce((a, e) => a + (Number(e.amount) || 0), 0);
+
+  let income = sum('income');
   const fixed = sum('fixed');
   const variable = sum('variable');
-  const savings = sum('savings');
+  let savings = sum('savings');
   const expenses = fixed + variable;
+
+  if (mode === 'operational') {
+    const carry = carryInIncomeAmount(entries);
+    income = Math.max(0, income - carry);
+    savings = Math.max(0, savings - carry);
+  }
+
   const outflow = expenses + savings;
 
   return {
@@ -49,6 +70,31 @@ export function amountToBoostSavings(totals: MonthTotals): number {
   if (totals.net <= 0 || totals.income <= 0) return 0;
   const floor = netFloor(totals.income);
   return Math.max(0, totals.net - floor);
+}
+
+export type SavingsCut = { id: string; name: string; reduce: number; remaining: number };
+
+/** Reduce existing non-zero savings rows to cover a negative net (underskott). */
+export function deficitSavingsCuts(net: number, savingsRows: Entry[]): SavingsCut[] {
+  const need = Math.abs(Math.round(Number(net) || 0));
+  if (need <= 0) return [];
+  const funded = savingsRows.filter((e) => e.category === 'savings' && (Number(e.amount) || 0) > 0);
+  if (funded.length === 0) return [];
+  const parts = splitProportionally(need, funded.map((e) => Number(e.amount) || 0));
+  return funded
+    .map((e, i) => {
+      const amount = Number(e.amount) || 0;
+      const reduce = Math.min(amount, parts[i] ?? 0);
+      return { id: e.id, name: canonicalItemName('savings', e.name), reduce, remaining: amount - reduce };
+    })
+    .filter((c) => c.reduce > 0);
+}
+
+/** Weights for surplus split: current balances if any, otherwise even. */
+export function savingsSplitWeights(targets: { amount: number }[]): number[] {
+  const amounts = targets.map((t) => Math.max(0, Number(t.amount) || 0));
+  if (amounts.some((a) => a > 0)) return amounts;
+  return targets.map(() => 1);
 }
 
 /** Fördelar ett heltal proportionellt utan att summan överstiger `total`. */
@@ -106,8 +152,12 @@ export function effectiveCarriedOverBalance(
 }
 
 /** Poäng 0–100 enbart från innevarande månads budget och saldo före lön. */
-export function healthScore(entries: Entry[], endingBalance: number): HealthScore {
-  const t = totalsFor(entries);
+export function healthScore(
+  entries: Entry[],
+  endingBalance: number,
+  mode: TotalsMode = 'ledger',
+): HealthScore {
+  const t = totalsFor(entries, mode);
   const income = t.income;
   const savingsRatePct = income > 0 ? t.savings / income : 0;
   const netMarginPct = income > 0 ? (income - t.expenses) / income : 0;
