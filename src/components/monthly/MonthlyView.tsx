@@ -112,7 +112,10 @@ export default function MonthlyView({
         await onAdd(month, 'income', CARRY_IN_INCOME_NAME, allocated);
       }
     }
-    await onUpdateMeta(month, { ending_balance: 0 });
+    await onUpdateMeta(month, {
+      ending_balance: 0,
+      carried_over_balance: (Number(meta.carried_over_balance) || 0) + allocated,
+    });
     setDockedUntil(dockSurplusSection());
   };
 

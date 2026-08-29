@@ -1,4 +1,4 @@
-import { Entry } from './types';
+import { Entry, MonthMeta } from './types';
 
 export interface MonthTotals {
   income: number;
@@ -92,6 +92,18 @@ export const HEALTH_CAPS = {
 } as const;
 
 export type HealthFactor = keyof typeof HEALTH_CAPS;
+
+/**
+ * Saldo före lön for health/AI: persisted roll-over after Verkställ,
+ * otherwise the current "Kvar på lönekontot" input.
+ */
+export function effectiveCarriedOverBalance(
+  meta: Pick<MonthMeta, 'carried_over_balance' | 'ending_balance'>,
+): number {
+  const carried = Math.max(0, Number(meta.carried_over_balance) || 0);
+  if (carried > 0) return carried;
+  return Math.max(0, Number(meta.ending_balance) || 0);
+}
 
 /** Poäng 0–100 enbart från innevarande månads budget och saldo före lön. */
 export function healthScore(entries: Entry[], endingBalance: number): HealthScore {

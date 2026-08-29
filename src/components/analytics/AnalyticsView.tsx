@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { ChevronLeft, ChevronRight, LineChart as LineIcon, BarChart3 } from 'lucide-react';
 import { Entry, MonthMeta } from '@/lib/types';
-import { healthScore, totalsFor } from '@/lib/calculations';
+import { healthScore, totalsFor, effectiveCarriedOverBalance } from '@/lib/calculations';
 import { addMonths, formatKr, formatPercent, monthLabel, monthShort } from '@/lib/format';
 import HealthScore from './HealthScore';
 
@@ -39,7 +39,7 @@ export default function AnalyticsView({ month, onMonthChange, entries, getMeta }
     [entries, month],
   );
   const score = useMemo(
-    () => healthScore(monthEntries, getMeta(month).ending_balance),
+    () => healthScore(monthEntries, effectiveCarriedOverBalance(getMeta(month))),
     [monthEntries, getMeta, month],
   );
 

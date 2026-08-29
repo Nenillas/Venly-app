@@ -2,15 +2,34 @@ import { Entry } from './types';
 import { totalsFor, MonthTotals, healthScore, healthTips } from './calculations';
 import { formatKr, formatPercent, monthLabel } from './format';
 
-export function generateInsight(
-  month: string,
-  months: string[],
-  byMonth: Map<string, Entry[]>,
-  endingBalance: number,
-): string[] {
+/**
+ * System context for AI insight.
+ * `carried_over_balance` is the starting / roll-over funds for the month
+ * ("Kvar på lönekontot vid nästa lön") — not the month's net result.
+ */
+export const INSIGHT_SYSTEM_MESSAGE = `Du analyserar en användares månadsbudget.
+Fältet carried_over_balance är ingående saldo / överförda medel: "Kvar på lönekontot vid nästa lön".
+Det är startbalansen som rullas över till månaden, inte nettoresultatet.`;
+
+export type InsightPayload = {
+  month: string;
+  months: string[];
+  byMonth: Map<string, Entry[]>;
+  carried_over_balance: number;
+  ending_balance: number;
+  /** System message describing how to interpret carried_over_balance. */
+  system: string;
+};
+
+export function generateInsight(payload: InsightPayload): string[] {
+  const { month, months, byMonth, carried_over_balance, ending_balance, system } = payload;
+  const prompt = {
+    system,
+    data: { carried_over_balance, ending_balance },
+  };
   const monthEntries = byMonth.get(month) ?? [];
   const cur = totalsFor(monthEntries);
-  const score = healthScore(monthEntries, endingBalance);
+  const score = healthScore(monthEntries, prompt.data.carried_over_balance);
   if (cur.income === 0 && cur.expenses === 0) {
     return [
       `Det finns ännu inga poster för ${monthLabel(month)}.`,
@@ -25,7 +44,7 @@ export function generateInsight(
   const sentences: string[] = [];
 
   sentences.push(
-    `Hälsobetyget för ${monthLabel(month)} är ${score.total} av 100 (Sparkvot ${score.savingsRate}/40p, Nettomarginal ${score.netMargin}/40p, Saldo före lön ${score.endingBalance}/20p).`,
+    `Hälsobetyget för ${monthLabel(month)} är ${score.total} av 100 (Sparkvot ${score.savingsRate}/40p, Nettomarginal ${score.netMargin}/40p, Saldo före lön ${score.endingBalance}/20p). Kvar på lönekontot vid nästa lön var ${formatKr(prompt.data.carried_over_balance)}.`,
   );
 
   if (cur.net >= 0) {

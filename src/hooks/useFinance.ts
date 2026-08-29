@@ -17,6 +17,7 @@ import { logSupabaseError, supabaseErrorMessage } from '@/lib/supabaseErrors';
 
 const DEFAULT_META = {
   ending_balance: 0,
+  carried_over_balance: 0,
   alloc_buffer: 40,
   alloc_avanza: 40,
   alloc_travel: 20,
@@ -271,6 +272,7 @@ export function useFinance(userId: string | undefined, sessionReady: boolean) {
             alloc_buffer: sourceMeta.alloc_buffer,
             alloc_avanza: sourceMeta.alloc_avanza,
             alloc_travel: sourceMeta.alloc_travel,
+            carried_over_balance: sourceMeta.carried_over_balance,
           })
           .eq('month', toMonth)
           .eq('user_id', userId);
@@ -287,6 +289,7 @@ export function useFinance(userId: string | undefined, sessionReady: boolean) {
                   alloc_buffer: sourceMeta.alloc_buffer,
                   alloc_avanza: sourceMeta.alloc_avanza,
                   alloc_travel: sourceMeta.alloc_travel,
+                  carried_over_balance: sourceMeta.carried_over_balance,
                 }
               : m,
           ),

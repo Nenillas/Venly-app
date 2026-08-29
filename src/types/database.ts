@@ -22,6 +22,7 @@ export type Database = {
           user_id: string;
           month: string;
           ending_balance: number | null;
+          carried_over_balance: number | null;
           created_at: string | null;
           alloc_buffer: number | null;
           alloc_avanza: number | null;
@@ -32,6 +33,7 @@ export type Database = {
           user_id: string;
           month: string;
           ending_balance?: number | null;
+          carried_over_balance?: number | null;
           created_at?: string | null;
           alloc_buffer?: number | null;
           alloc_avanza?: number | null;
@@ -42,6 +44,7 @@ export type Database = {
           user_id?: string;
           month?: string;
           ending_balance?: number | null;
+          carried_over_balance?: number | null;
           created_at?: string | null;
           alloc_buffer?: number | null;
           alloc_avanza?: number | null;

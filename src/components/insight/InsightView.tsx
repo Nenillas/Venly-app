@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Lightbulb, Sparkles } from 'lucide-react';
 import { Entry, MonthMeta } from '@/lib/types';
-import { generateInsight } from '@/lib/advisor';
+import { generateInsight, INSIGHT_SYSTEM_MESSAGE } from '@/lib/advisor';
 import { addMonths, monthLabel } from '@/lib/format';
+import { effectiveCarriedOverBalance } from '@/lib/calculations';
 
 interface Props {
   month: string;
@@ -25,9 +26,18 @@ export default function InsightView({ month, onMonthChange, entries, getMeta }: 
     return map;
   }, [entries]);
 
+  const meta = getMeta(month);
   const insight = useMemo(
-    () => generateInsight(month, months, byMonth, getMeta(month).ending_balance),
-    [month, months, byMonth, getMeta],
+    () =>
+      generateInsight({
+        month,
+        months,
+        byMonth,
+        carried_over_balance: effectiveCarriedOverBalance(meta),
+        ending_balance: meta.ending_balance,
+        system: INSIGHT_SYSTEM_MESSAGE,
+      }),
+    [month, months, byMonth, meta],
   );
   const headline = insight[0] ?? '';
   const recommendations = insight.slice(1);

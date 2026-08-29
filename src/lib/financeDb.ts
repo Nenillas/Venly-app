@@ -71,6 +71,7 @@ export function normalizeMeta(row: Record<string, unknown>): MonthMeta {
     id: String(row.id ?? ''),
     month: monthKeyFromRow(row),
     ending_balance: Number(row.ending_balance) || 0,
+    carried_over_balance: Number(row.carried_over_balance) || 0,
     alloc_buffer: Number(row.alloc_buffer) || 0,
     alloc_avanza: Number(row.alloc_avanza) || 0,
     alloc_travel: Number(row.alloc_travel) || 0,

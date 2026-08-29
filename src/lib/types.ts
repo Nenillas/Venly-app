@@ -15,6 +15,7 @@ export interface MonthMeta {
   id: string;
   month: string;
   ending_balance: number;
+  carried_over_balance: number;
   alloc_buffer: number;
   alloc_avanza: number;
   alloc_travel: number;
