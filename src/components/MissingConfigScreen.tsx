@@ -1,10 +1,10 @@
-import VenlyLogo from '@/components/VenlyLogo';
+import Logo from '@/components/Logo';
 
 export default function MissingConfigScreen() {
   return (
     <div className="grid min-h-dvh min-h-screen place-items-center px-4 py-10">
       <div className="card w-full max-w-lg p-6 text-center">
-        <VenlyLogo size={40} className="mx-auto mb-4" />
+        <Logo size={40} className="mx-auto mb-4" />
         <h1 className="font-display text-xl font-bold text-slate-50">Venly är inte konfigurerad</h1>
         <p className="mt-3 text-sm leading-relaxed text-slate-400">
           Produktionsbygget saknar Supabase-nycklar. Sätt följande variabler i Vercel

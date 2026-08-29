@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 import { readLoginAuthError, readLoginAuthInfo } from '@/lib/authRedirect';
 import { requestPasswordReset, signInWithMagicLink, signInWithPassword, signUpWithPassword } from '@/lib/supabase/auth';
-import VenlyLogo from '@/components/VenlyLogo';
+import Logo from '@/components/Logo';
 
 type Mode = 'login' | 'signup' | 'forgot';
 
@@ -122,7 +122,7 @@ export default function AuthView() {
   return (
     <div className="flex min-h-screen w-full max-w-full flex-col items-center justify-center overflow-x-hidden px-4 py-10">
       <div className="mb-8 flex items-center gap-3 animate-fade-in">
-        <VenlyLogo size={40} />
+        <Logo size={44} />
         <div>
           <h1 className="font-display text-2xl font-bold leading-none text-slate-50">
             Ven<span className="text-teal-300">ly</span>

@@ -12,7 +12,7 @@ import {
 } from '@/lib/authRedirect';
 import { claimAuthExchange, claimResetPasswordEffect } from '@/lib/authExchangeLock';
 import { signOut, updatePassword, waitForSession } from '@/lib/supabase/auth';
-import VenlyLogo from '@/components/VenlyLogo';
+import Logo from '@/components/Logo';
 
 export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
   const hasHandledReset = useRef(false);
@@ -167,7 +167,7 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
     return (
       <div className="grid min-h-screen place-items-center text-slate-500">
         <div className="text-center">
-          <VenlyLogo size={40} className="mx-auto mb-4" />
+          <Logo size={40} className="mx-auto mb-4" />
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-teal-300" />
           <p className="mt-4 text-sm">Förbereder återställning…</p>
         </div>
@@ -178,7 +178,7 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
   return (
     <div className="flex min-h-screen w-full max-w-full flex-col items-center justify-center overflow-x-hidden px-4 py-10">
       <div className="mb-8 flex items-center gap-3">
-        <VenlyLogo size={40} />
+        <Logo size={44} />
         <div>
           <h1 className="font-display text-2xl font-bold leading-none text-slate-50">
             Ven<span className="text-teal-300">ly</span>

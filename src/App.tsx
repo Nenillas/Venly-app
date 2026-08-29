@@ -12,7 +12,7 @@ import AuthView from '@/components/auth/AuthView';
 import AuthCallback from '@/components/auth/AuthCallback';
 import ResetPassword from '@/pages/ResetPassword';
 import UserMenu from '@/components/auth/UserMenu';
-import VenlyLogo from '@/components/VenlyLogo';
+import Logo from '@/components/Logo';
 
 type Tab = 'monthly' | 'payments' | 'analytics' | 'insight';
 
@@ -65,8 +65,8 @@ function App() {
     <div className="min-h-screen w-full max-w-full overflow-x-hidden">
       <header className="sticky top-0 z-30 isolate border-b border-white/[0.06] bg-ink-950/80 backdrop-blur-xl">
         <div className="page-shell pointer-events-auto flex items-center justify-between gap-2 py-3.5 sm:gap-4">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <VenlyLogo size={40} />
+          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+            <Logo size={40} />
             <div className="min-w-0">
               <h1 className="font-display text-lg font-bold leading-none text-zinc-50">
                 Ven<span className="text-teal-300">ly</span>
@@ -145,7 +145,7 @@ function App() {
       </main>
 
       <footer className="page-shell flex flex-wrap items-center justify-center gap-2 pb-8 pt-4 text-center text-xs text-slate-600">
-        <VenlyLogo size={32} />
+        <Logo size={28} className="opacity-90" />
         <span>Venly · Smartare kontroll över din ekonomi.</span>
       </footer>
     </div>

@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import VenlyLogo from '@/components/VenlyLogo';
+import Logo from '@/components/Logo';
 
 interface Props {
   children: ReactNode;
@@ -26,7 +26,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     return (
       <div className="grid min-h-dvh min-h-screen place-items-center px-4 py-10">
         <div className="card w-full max-w-md p-6 text-center">
-          <VenlyLogo size={40} className="mx-auto mb-4" />
+          <Logo size={40} className="mx-auto mb-4" />
           <h1 className="font-display text-xl font-bold text-slate-50">Något gick fel</h1>
           <p className="mt-2 text-sm text-slate-400">
             Sidan kunde inte laddas. Felet är loggat i webbläsarens konsol.
