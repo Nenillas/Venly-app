@@ -124,10 +124,10 @@ export default function AuthView() {
       <div className="mb-8 flex items-center gap-3 animate-fade-in">
         <Logo size={44} />
         <div>
-          <h1 className="font-display text-2xl font-bold leading-none text-slate-50">
+          <h1 className="font-display text-2xl font-bold leading-none text-zinc-50">
             Ven<span className="text-teal-300">ly</span>
           </h1>
-          <p className="mt-1 text-sm text-slate-500">Smartare kontroll över din ekonomi</p>
+          <p className="mt-1 text-sm text-zinc-300">Smartare kontroll över din ekonomi</p>
         </div>
       </div>
 
@@ -139,7 +139,7 @@ export default function AuthView() {
               type="button"
               onClick={() => { setMode(id); setError(null); setInfo(null); }}
               className={`rounded-lg py-2 text-sm font-medium transition ${
-                mode === id ? 'bg-ink-800 text-teal-200 shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
+                mode === id ? 'bg-ink-800 text-teal-200 shadow-sm' : 'text-zinc-300 hover:text-zinc-50'
               }`}
             >
               {id === 'login' ? 'Logga in' : 'Skapa konto'}
@@ -149,13 +149,13 @@ export default function AuthView() {
 
         {mode === 'forgot' ? (
           <>
-            <h2 className="font-display text-xl font-bold text-slate-50">Glömt lösenord?</h2>
-            <p className="mt-1 mb-5 text-sm text-slate-500">
+            <h2 className="font-display text-xl font-bold text-zinc-50">Glömt lösenord?</h2>
+            <p className="mt-1 mb-5 text-sm text-zinc-300">
               Ange din e-postadress så skickar vi en länk för att välja ett nytt lösenord.
             </p>
             <form onSubmit={sendResetLink} className="space-y-3">
               <label className="block" htmlFor="reset-email">
-                <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-zinc-300">
                   <Mail className="h-3.5 w-3.5" /> E-post
                 </span>
                 <input
@@ -164,7 +164,7 @@ export default function AuthView() {
                   autoComplete="username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="field w-full px-3 py-2.5 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-600"
+                  className="field w-full px-3 py-2.5 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-400"
                   placeholder="du@epost.se"
                   required
                 />
@@ -186,7 +186,7 @@ export default function AuthView() {
               <button
                 type="button"
                 onClick={() => { setMode('login'); setError(null); setInfo(null); }}
-                className="w-full py-2 text-sm text-slate-400 transition hover:text-slate-200"
+                className="w-full py-2 text-sm text-zinc-300 transition hover:text-zinc-50"
               >
                 Tillbaka till inloggning
               </button>
@@ -194,10 +194,10 @@ export default function AuthView() {
           </>
         ) : (
           <>
-        <h2 className="font-display text-xl font-bold text-slate-50">
+        <h2 className="font-display text-xl font-bold text-zinc-50">
           {mode === 'login' ? 'Välkommen tillbaka' : 'Kom igång'}
         </h2>
-        <p className="mt-1 mb-5 text-sm text-slate-500">
+        <p className="mt-1 mb-5 text-sm text-zinc-300">
           {mode === 'login'
             ? 'Logga in för att se din budget.'
             : 'Skapa ett konto så sätter vi upp en tom månadsbudget åt dig.'}
@@ -205,7 +205,7 @@ export default function AuthView() {
 
         <form method="post" autoComplete="on" onSubmit={submitPassword} className="space-y-3">
           <label className="block" htmlFor="auth-email">
-            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-400">
+            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-zinc-300">
               <Mail className="h-3.5 w-3.5" /> E-post
             </span>
             <input
@@ -216,13 +216,13 @@ export default function AuthView() {
               inputMode="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="field w-full px-3 py-2.5 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-600"
+              className="field w-full px-3 py-2.5 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-400"
               placeholder="du@epost.se"
               required
             />
           </label>
           <label className="block" htmlFor="auth-password">
-            <span className="mb-1.5 flex items-center justify-between gap-1.5 text-xs font-medium text-slate-400">
+            <span className="mb-1.5 flex items-center justify-between gap-1.5 text-xs font-medium text-zinc-300">
               <span className="flex items-center gap-1.5">
                 <Lock className="h-3.5 w-3.5" /> Lösenord
               </span>
@@ -243,7 +243,7 @@ export default function AuthView() {
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="field w-full px-3 py-2.5 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-600"
+              className="field w-full px-3 py-2.5 text-sm text-zinc-100 outline-none transition-all duration-200 placeholder:text-zinc-400"
               placeholder={mode === 'signup' ? 'Minst 6 tecken' : '••••••••'}
               minLength={mode === 'signup' ? 6 : undefined}
               required
@@ -267,7 +267,7 @@ export default function AuthView() {
           </button>
         </form>
 
-        <div className="my-5 flex items-center gap-3 text-[11px] uppercase tracking-wide text-slate-600">
+        <div className="my-5 flex items-center gap-3 text-[11px] uppercase tracking-wide text-zinc-300">
           <span className="h-px flex-1 bg-white/10" />
           eller
           <span className="h-px flex-1 bg-white/10" />

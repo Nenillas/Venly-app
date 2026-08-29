@@ -55,12 +55,12 @@ export default function HealthScore({ score }: { score: Score }) {
         onClick={() => setOpen(true)}
         className="card w-full min-w-0 p-5 text-left animate-slide-up transition-all duration-200 hover:border-white/10 hover:bg-white/[0.02] sm:p-6"
       >
-        <div className="flex items-center justify-between gap-2 text-slate-300">
+        <div className="flex items-center justify-between gap-2 text-zinc-100">
           <span className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-teal-300" />
             <h2 className="font-display text-lg font-bold">Hälsobetyg</h2>
           </span>
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/5 text-slate-400">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-white/5 text-zinc-300">
             <Info className="h-4 w-4" />
           </span>
         </div>
@@ -79,7 +79,7 @@ export default function HealthScore({ score }: { score: Score }) {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className={`stat-num text-4xl ${c.text}`}>{score.total}</div>
-              <div className="text-[11px] uppercase tracking-wide text-slate-500">av 100</div>
+              <div className="text-[11px] uppercase tracking-wide text-zinc-300">av 100</div>
             </div>
           </div>
 
@@ -94,8 +94,8 @@ export default function HealthScore({ score }: { score: Score }) {
               return (
                 <div key={m.key}>
                   <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="flex min-w-0 items-center gap-2 text-slate-300">
-                      <m.icon className="h-4 w-4 text-slate-500" /> {m.label}
+                    <span className="flex min-w-0 items-center gap-2 text-zinc-100">
+                      <m.icon className="h-4 w-4 text-zinc-300" /> {m.label}
                     </span>
                     <span className={`tabular-nums font-semibold ${mc.text}`}>{pts}/{max}p</span>
                   </div>
@@ -105,7 +105,7 @@ export default function HealthScore({ score }: { score: Score }) {
                 </div>
               );
             })}
-            <p className="text-xs text-slate-500">Tryck för att se hur betyget räknas.</p>
+            <p className="text-xs text-zinc-300">Tryck för att se hur betyget räknas.</p>
           </div>
         </div>
       </button>
@@ -132,7 +132,7 @@ function HealthScoreModal({ score, onClose }: { score: Score; onClose: () => voi
       <div className="relative max-h-[min(90vh,90dvh)] w-full max-w-lg overflow-y-auto overflow-x-hidden card p-4 sm:p-6 animate-scale-in">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-slate-200"
+          className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-zinc-300 hover:bg-white/5 hover:text-zinc-50"
           aria-label="Stäng"
         >
           <X className="h-5 w-5" />
@@ -143,8 +143,8 @@ function HealthScoreModal({ score, onClose }: { score: Score; onClose: () => voi
             <Info className="h-5 w-5" />
           </span>
           <div>
-            <h2 id="health-score-title" className="font-display text-xl font-bold text-slate-50">Hur beräknas ditt betyg?</h2>
-            <p className="text-sm text-slate-500">Totalt {score.total} av 100 poäng den här månaden</p>
+            <h2 id="health-score-title" className="font-display text-xl font-bold text-zinc-50">Hur beräknas ditt betyg?</h2>
+            <p className="text-sm text-zinc-300">Totalt {score.total} av 100 poäng den här månaden</p>
           </div>
         </div>
 
@@ -156,12 +156,12 @@ function HealthScoreModal({ score, onClose }: { score: Score; onClose: () => voi
             return (
               <div key={m.key}>
                 <div className="mb-1 flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 text-slate-200">
-                    <m.icon className="h-4 w-4 text-slate-500" /> {m.label}
+                  <span className="flex items-center gap-2 text-zinc-50">
+                    <m.icon className="h-4 w-4 text-zinc-300" /> {m.label}
                   </span>
                   <span className={`tabular-nums font-semibold ${mc.text}`}>{pts}/{max}p</span>
                 </div>
-                <p className="mb-1.5 text-xs text-slate-500">{m.hint(score)}</p>
+                <p className="mb-1.5 text-xs text-zinc-300">{m.hint(score)}</p>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
                   <div className={`h-full rounded-full ${mc.bar}`} style={{ width: `${(pts / max) * 100}%` }} />
                 </div>
@@ -177,7 +177,7 @@ function HealthScoreModal({ score, onClose }: { score: Score; onClose: () => voi
           </div>
           <ul className="space-y-2">
             {tips.map((tip) => (
-              <li key={tip} className="flex gap-2 text-sm leading-relaxed text-slate-300">
+              <li key={tip} className="flex gap-2 text-sm leading-relaxed text-zinc-200">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300" />
                 {tip}
               </li>
@@ -185,7 +185,7 @@ function HealthScoreModal({ score, onClose }: { score: Score; onClose: () => voi
           </ul>
         </div>
 
-        <p className="mt-4 text-center text-[11px] leading-relaxed text-slate-600">
+        <p className="mt-4 text-center text-[11px] leading-relaxed text-zinc-300">
           Betyget baseras enbart på månadens budgeterade siffror och inknappade saldo före lön.
         </p>
       </div>

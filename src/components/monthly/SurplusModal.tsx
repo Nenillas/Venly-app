@@ -88,7 +88,7 @@ export default function SurplusModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose} />
       <div className="relative max-h-[min(90vh,90dvh)] w-full max-w-lg overflow-y-auto overflow-x-hidden card p-4 sm:p-6 animate-scale-in">
-        <button type="button" onClick={onClose} className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-slate-200">
+        <button type="button" onClick={onClose} className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-zinc-300 hover:bg-white/5 hover:text-zinc-50">
           <X className="h-5 w-5" />
         </button>
 
@@ -97,8 +97,8 @@ export default function SurplusModal({
             <Sparkles className="h-6 w-6" />
           </span>
           <div>
-            <h2 className="font-display text-xl font-bold text-slate-50">Verkställ överskott</h2>
-            <p className="text-sm text-slate-500">
+            <h2 className="font-display text-xl font-bold text-zinc-50">Verkställ överskott</h2>
+            <p className="text-sm text-zinc-300">
               {usingDefaults
                 ? `Inga sparanderader ännu – förslag enligt ${SAVINGS_TARGETS.buffer}, ${SAVINGS_TARGETS.avanza} och ${SAVINGS_TARGETS.travel}`
                 : 'Fördela upp till 100 % på dina rader under målinriktat sparande. Resten stannar på lönekontot.'}
@@ -108,12 +108,12 @@ export default function SurplusModal({
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-black/20 p-4">
-            <div className="text-xs text-slate-500">Faktiska levnadskostnader</div>
-            <div className="stat-num mt-1 text-lg text-slate-200">{formatKr(livingCosts)}</div>
+            <div className="text-xs text-zinc-300">Faktiska levnadskostnader</div>
+            <div className="stat-num mt-1 text-lg text-zinc-50">{formatKr(livingCosts)}</div>
           </div>
           <div className="rounded-2xl border border-teal-400/15 bg-teal-400/[0.06] p-4">
-            <div className="text-xs text-teal-200/80">Överskott att fördela</div>
-            <div className="stat-num mt-1 text-lg text-teal-300">{formatKr(surplus)}</div>
+            <div className="text-xs text-teal-100">Överskott att fördela</div>
+            <div className="stat-num mt-1 text-lg text-teal-200">{formatKr(surplus)}</div>
           </div>
         </div>
 
@@ -125,11 +125,11 @@ export default function SurplusModal({
             return (
               <div key={t.id ?? `${t.name}-${i}`}>
                 <div className="mb-1.5 flex items-center justify-between text-sm">
-                  <span className="flex min-w-0 items-center gap-2 text-slate-300">
+                  <span className="flex min-w-0 items-center gap-2 text-zinc-200">
                     <Icon className={`h-4 w-4 shrink-0 ${color.text}`} />
                     <span className="truncate">{t.name}</span>
                   </span>
-                  <span className="ml-2 shrink-0 tabular-nums text-slate-400">
+                  <span className="ml-2 shrink-0 tabular-nums text-zinc-300">
                     <b className={color.text}>{formatKr(parts[i] ?? 0)}</b> · {pct}%
                   </span>
                 </div>
@@ -151,7 +151,7 @@ export default function SurplusModal({
         </div>
 
         <div className="mt-4 space-y-2">
-          <div className={`flex items-center justify-between rounded-2xl px-4 py-2.5 text-sm ${overLimit ? 'bg-rose-300/10 text-rose-200' : 'bg-white/[0.04] text-zinc-400'}`}>
+          <div className={`flex items-center justify-between rounded-2xl px-4 py-2.5 text-sm ${overLimit ? 'bg-rose-300/10 text-rose-200' : 'bg-white/[0.04] text-zinc-300'}`}>
             <span>Summa fördelning</span>
             <span className="tabular-nums font-semibold">{sum}%</span>
           </div>
@@ -165,13 +165,13 @@ export default function SurplusModal({
                   style={{ width: `${Math.min(100, Math.max(0, sum))}%` }}
                 />
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-slate-500">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-zinc-300">
                 <span>
-                  Fördelat till sparande: <b className="tabular-nums text-slate-300">{sum}%</b>
+                  Fördelat till sparande: <b className="tabular-nums text-zinc-50">{sum}%</b>
                   {' '}({formatKr(allocatedKr)})
                 </span>
                 <span>
-                  Kvar på kontot: <b className="tabular-nums text-slate-300">{remainingPct}%</b>
+                  Kvar på kontot: <b className="tabular-nums text-zinc-50">{remainingPct}%</b>
                   {' '}({formatKr(leftoverKr)})
                 </span>
               </div>
@@ -180,7 +180,7 @@ export default function SurplusModal({
         </div>
 
         {surplus <= 0 && (
-          <p className="mt-3 text-center text-sm text-slate-500">
+          <p className="mt-3 text-center text-sm text-zinc-300">
             Ange ett belopp under "Kvar på lönekontot" för att kunna fördela ett överskott.
           </p>
         )}

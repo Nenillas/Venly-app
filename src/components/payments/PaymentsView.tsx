@@ -84,7 +84,7 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
             <ChevronLeft className="h-5 w-5" />
           </button>
           <div className="min-w-0 flex-1 text-center sm:min-w-[11rem] sm:flex-none">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">Betalningar</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-zinc-300">Betalningar</div>
             <div className="font-display text-lg font-bold capitalize text-zinc-50">{monthLabel(month)}</div>
           </div>
           <button
@@ -108,7 +108,7 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
                 ? 'Inga fakturor att betala manuellt'
                 : `${paidCount} av ${total} räkningar betalda (${formatPercent(pct)})`}
             </h2>
-            <p className="mt-1 text-sm text-zinc-400">
+            <p className="mt-1 text-sm text-zinc-300">
               {total === 0
                 ? 'Endast fakturor över 0 kr räknas i checklistan. Autogiro och kortköp ligger i en egen lista under.'
                 : <>Kvar att betala: <b className="text-zinc-100">{formatKr(remaining)}</b></>}
@@ -124,7 +124,7 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
       </section>
 
       {bills.length === 0 ? (
-        <div className="card grid place-items-center p-12 text-center text-slate-500">
+        <div className="card grid place-items-center p-12 text-center text-zinc-300">
           <CheckSquare className="mb-3 h-10 w-10 opacity-40" />
           <p>Inga fakturor över 0 kr att bocka av.</p>
         </div>
@@ -134,7 +134,7 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
             <BillRow key={bill.id} bill={bill} onToggle={onTogglePaid} />
           ))}
           {paidBills.length > 0 && unpaidBills.length > 0 && (
-            <li className="list-none px-1 pt-3 pb-1 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+            <li className="list-none px-1 pt-3 pb-1 text-[11px] font-medium uppercase tracking-wide text-zinc-300">
               Betalda
             </li>
           )}
@@ -152,18 +152,18 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
             onClick={() => setOtherOpen((v) => !v)}
             className="flex w-full items-center gap-3 p-5 text-left transition-all duration-200 hover:bg-white/[0.02]"
           >
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-slate-300">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/5 text-zinc-300">
               <Repeat className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <h3 className="font-display font-semibold text-slate-100">
+              <h3 className="font-display font-semibold text-zinc-50">
                 {otherOpen ? 'Dölj Autogiro & Kortköp' : 'Visa Autogiro & Kortköp'}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-zinc-300">
                 {otherCount} {otherCount === 1 ? 'post' : 'poster'} · {formatKr(otherSum)} · ingår inte i checklistan
               </p>
             </div>
-            <ChevronDown className={`h-5 w-5 text-slate-500 transition ${otherOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-5 w-5 text-zinc-400 transition ${otherOpen ? 'rotate-180' : ''}`} />
           </button>
           {otherOpen && (
             <div className="border-t border-white/5 px-3 pb-4 pt-2">
@@ -204,12 +204,12 @@ function OtherTypeList({
   return (
     <div className="mb-3 last:mb-0">
       <div className="flex items-center gap-2 px-2 py-2">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/5 text-slate-400">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/5 text-zinc-300">
           {icon}
         </span>
         <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-semibold text-slate-200">{title}</h4>
-          <p className="text-[11px] text-slate-500">
+          <h4 className="text-sm font-semibold text-zinc-50">{title}</h4>
+          <p className="text-[11px] text-zinc-300">
             {items.length} {items.length === 1 ? 'post' : 'poster'} · {formatKr(total)} · {hint}
           </p>
         </div>
@@ -218,17 +218,17 @@ function OtherTypeList({
         {items.map((item) => (
           <li key={item.id} className="flex items-center gap-3 rounded-xl px-2 py-2.5">
             <div className="min-w-0 flex-1">
-              <div className="truncate font-medium text-slate-300">{item.name}</div>
+              <div className="font-medium text-zinc-100">{item.name}</div>
               <div className="mt-1 flex flex-wrap items-center gap-1.5">
                 <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${TAG[item.category as 'fixed' | 'variable']}`}>
                   {CATEGORY_LABELS[item.category]}
                 </span>
-                <span className="inline-flex rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400 ring-1 ring-white/10">
+                <span className="inline-flex rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-300 ring-1 ring-white/10">
                   {PAYMENT_TYPE_LABELS[item.payment_type]}
                 </span>
               </div>
             </div>
-            <div className="stat-num shrink-0 text-sm text-slate-400">{formatKr(paymentAmount(item))}</div>
+            <div className="stat-num shrink-0 text-sm text-zinc-100">{formatKr(paymentAmount(item))}</div>
           </li>
         ))}
       </ul>
@@ -265,14 +265,14 @@ function BillRow({
           {paid && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
         </span>
         <div className="min-w-0 flex-1">
-          <div className={`font-medium truncate ${paid ? 'text-slate-400 line-through' : 'text-slate-100'}`}>
+          <div className={`font-medium truncate ${paid ? 'text-zinc-400 line-through' : 'text-zinc-50'}`}>
             {bill.name}
           </div>
           <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${tagClass}`}>
             {CATEGORY_LABELS[bill.category]}
           </span>
         </div>
-        <div className={`stat-num shrink-0 text-base ${paid ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+        <div className={`stat-num shrink-0 text-base ${paid ? 'text-zinc-400 line-through' : 'text-zinc-50'}`}>
           {formatKr(paymentAmount(bill))}
         </div>
       </button>

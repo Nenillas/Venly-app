@@ -9,7 +9,7 @@ import { healthScore, totalsFor, effectiveCarriedOverBalance } from '@/lib/calcu
 import { addMonths, formatKr, formatPercent, monthLabel, monthShort } from '@/lib/format';
 import HealthScore from './HealthScore';
 
-const AXIS = '#64748b';
+const AXIS = '#cbd5e1';
 const GRID = 'rgba(255,255,255,0.06)';
 
 interface Props {
@@ -69,7 +69,7 @@ export default function AnalyticsView({ month, onMonthChange, entries, getMeta }
             <ChevronLeft className="h-5 w-5" />
           </button>
           <div className="min-w-0 flex-1 text-center sm:min-w-[11rem] sm:flex-none">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">Historik & Hälsa</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-zinc-300">Historik & Hälsa</div>
             <div className="font-display text-lg font-bold capitalize text-zinc-50">{monthLabel(month)}</div>
           </div>
           <button
@@ -80,7 +80,7 @@ export default function AnalyticsView({ month, onMonthChange, entries, getMeta }
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
-        <p className="min-w-0 text-sm text-zinc-500">Hälsobetyget gäller vald månads budget. Graferna visar upp till 12 månader.</p>
+        <p className="min-w-0 text-sm text-zinc-300">Hälsobetyget gäller vald månads budget. Graferna visar upp till 12 månader.</p>
       </header>
 
       <HealthScore score={score} />
@@ -126,12 +126,12 @@ const tooltip = {
     color: '#e2e8f0',
     fontSize: 13,
   },
-  labelStyle: { color: '#94a3b8', textTransform: 'capitalize' as const },
+  labelStyle: { color: '#cbd5e1', textTransform: 'capitalize' as const },
 };
 
 const legend = {
   iconType: 'circle' as const,
-  wrapperStyle: { fontSize: 12, color: '#94a3b8' },
+  wrapperStyle: { fontSize: 12, color: '#cbd5e1' },
 };
 
 function ChartCard({ title, subtitle, icon, children }: {
@@ -142,8 +142,8 @@ function ChartCard({ title, subtitle, icon, children }: {
       <div className="mb-4 flex min-w-0 items-center gap-3">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/5">{icon}</span>
         <div className="min-w-0">
-          <h3 className="font-display font-semibold text-slate-100">{title}</h3>
-          <p className="text-xs text-slate-500">{subtitle}</p>
+          <h3 className="font-display font-semibold text-zinc-50">{title}</h3>
+          <p className="text-xs text-zinc-300">{subtitle}</p>
         </div>
       </div>
       <div className="w-full min-w-0 overflow-x-auto">
@@ -157,7 +157,7 @@ function ChartCard({ title, subtitle, icon, children }: {
 
 function EmptyState() {
   return (
-    <div className="card grid place-items-center p-16 text-center text-slate-500">
+    <div className="card grid place-items-center p-16 text-center text-zinc-300">
       <BarChart3 className="mb-3 h-10 w-10 opacity-40" />
       <p>Ingen historik ännu. Lägg till poster under Månadsöversikt.</p>
     </div>

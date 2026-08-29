@@ -54,7 +54,7 @@ export default function InsightView({ month, onMonthChange, entries, getMeta }: 
             <ChevronLeft className="h-5 w-5" />
           </button>
           <div className="min-w-0 flex-1 text-center sm:min-w-[11rem] sm:flex-none">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">AI-insikt</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-zinc-300">AI-insikt</div>
             <div className="font-display text-lg font-bold capitalize text-zinc-50">{monthLabel(month)}</div>
           </div>
           <button
@@ -78,13 +78,13 @@ export default function InsightView({ month, onMonthChange, entries, getMeta }: 
 
       {recommendations.length > 0 && (
         <section className="card p-6 animate-slide-up">
-          <div className="flex items-center gap-2 text-slate-200">
+          <div className="flex items-center gap-2 text-zinc-50">
             <Lightbulb className="h-5 w-5 text-amber-300" />
             <h3 className="font-display text-lg font-bold">Rekommendationer</h3>
           </div>
           <div className="mt-4 space-y-3">
             {recommendations.map((s, i) => (
-              <p key={i} className="flex gap-3 text-slate-200">
+              <p key={i} className="flex gap-3 text-zinc-100">
                 <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300" />
                 <span className="leading-relaxed break-words">{s}</span>
               </p>

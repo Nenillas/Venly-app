@@ -65,19 +65,19 @@ export default function EntryList({
             {icon}
           </span>
           <div className="min-w-0">
-            <h3 className="font-display text-base font-semibold text-slate-100">{title}</h3>
-            <p className="text-xs text-slate-500">{hint}</p>
+            <h3 className="font-display text-base font-semibold text-zinc-50">{title}</h3>
+            <p className="text-xs text-zinc-300">{hint}</p>
           </div>
         </div>
         <div className="shrink-0 text-right">
           <div className={`stat-num text-lg ${a.text}`}>{formatKr(total)}</div>
-          <div className="text-[11px] text-slate-500">totalt</div>
+          <div className="text-[11px] font-medium text-zinc-300">totalt</div>
         </div>
       </div>
 
       <div className="space-y-1.5">
         {entries.length === 0 && (
-          <p className="py-3 text-center text-sm text-slate-500">Inga poster ännu.</p>
+          <p className="py-3 text-center text-sm text-zinc-300">Inga poster ännu.</p>
         )}
         {entries.map((e) => (
           <Row key={e.id} entry={e} accentRing={a.ring} dot={a.dot}
@@ -88,7 +88,7 @@ export default function EntryList({
       <form onSubmit={handleAdd}>
         <button
           type="submit"
-          className="relative z-[1] mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/10 py-2.5 text-sm font-medium text-zinc-400 transition-all duration-200 hover:border-white/20 hover:bg-white/[0.03] hover:text-zinc-200"
+          className="relative z-[1] mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/10 py-2.5 text-sm font-medium text-zinc-300 transition-all duration-200 hover:border-white/20 hover:bg-white/[0.03] hover:text-zinc-50"
         >
           <Plus className="h-4 w-4" /> {busy ? 'Lägger till…' : addLabel}
         </button>
@@ -175,7 +175,7 @@ function Row({
       )}
       {carryIn ? (
         <div className="relative z-[1] flex min-w-0 flex-1 items-center gap-1 px-2 py-1">
-          <span className="truncate text-sm text-slate-200">{CARRY_IN_INCOME_NAME}</span>
+          <span className="truncate text-sm text-zinc-50">{CARRY_IN_INCOME_NAME}</span>
           <CarryInHelp />
         </div>
       ) : (
@@ -184,7 +184,7 @@ function Row({
         onChange={(e) => setName(e.target.value)}
         onFocus={() => { focused.current = true; }}
         onBlur={() => { focused.current = false; commitName(); }}
-        className={`relative z-[1] min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-zinc-200 outline-none transition-all duration-200 ${accentRing} focus:bg-white/[0.04]`}
+        className={`relative z-[1] min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-zinc-50 outline-none transition-all duration-200 ${accentRing} focus:bg-white/[0.04]`}
       />
       )}
       {showType && (
@@ -206,17 +206,17 @@ function Row({
           onChange={(e) => { if (!carryIn) setAmount(e.target.value); }}
           onFocus={() => { if (!carryIn) focused.current = true; }}
           onBlur={() => { if (!carryIn) { focused.current = false; commitAmount(); } }}
-          className={`relative z-[1] w-[4.5rem] rounded-lg border border-white/[0.08] bg-black/15 px-2 py-1 text-right text-sm tabular-nums text-zinc-100 outline-none transition-all duration-200 sm:w-24 ${accentRing} ${
-            carryIn ? 'cursor-default text-slate-300' : ''
+          className={`relative z-[1] w-[4.5rem] rounded-lg border border-white/[0.08] bg-black/15 px-2 py-1 text-right text-sm tabular-nums text-zinc-50 outline-none transition-all duration-200 sm:w-24 ${accentRing} ${
+            carryIn ? 'cursor-default text-zinc-200' : ''
           }`}
           readOnly={carryIn}
         />
-        <span className="pointer-events-none text-xs text-slate-500">kr</span>
+        <span className="pointer-events-none text-xs text-zinc-300">kr</span>
       </div>
       <button
         type="button"
         onClick={onRequestDelete}
-        className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-zinc-600 transition-all duration-200 hover:bg-rose-400/10 hover:text-rose-300 ${
+        className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-zinc-400 transition-all duration-200 hover:bg-rose-400/10 hover:text-rose-300 ${
           carryIn ? 'opacity-100' : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100'
         }`}
         aria-label="Ta bort"
@@ -256,7 +256,7 @@ function DeleteConfirmDialog({
           type="button"
           onClick={onCancel}
           disabled={busy}
-          className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-slate-200 disabled:opacity-50"
+          className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-lg text-zinc-300 hover:bg-white/5 hover:text-zinc-50 disabled:opacity-50"
           aria-label="Avbryt"
         >
           <X className="h-5 w-5" />
@@ -266,9 +266,9 @@ function DeleteConfirmDialog({
             <Trash2 className="h-5 w-5" />
           </span>
           <div>
-            <h2 id="delete-row-title" className="font-display text-xl font-bold text-slate-50">Ta bort rad?</h2>
-            <p id="delete-row-desc" className="mt-2 text-sm leading-relaxed text-slate-400">
-              Är du säker på att du vill ta bort <span className="font-medium text-slate-200">{label}</span>? Denna åtgärd går inte att ångra.
+            <h2 id="delete-row-title" className="font-display text-xl font-bold text-zinc-50">Ta bort rad?</h2>
+            <p id="delete-row-desc" className="mt-2 text-sm leading-relaxed text-zinc-300">
+              Är du säker på att du vill ta bort <span className="font-medium text-zinc-50">{label}</span>? Denna åtgärd går inte att ångra.
             </p>
           </div>
         </div>
@@ -343,7 +343,7 @@ function CarryInHelp() {
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className="grid h-5 w-5 place-items-center rounded-full text-slate-500 transition hover:bg-white/10 hover:text-emerald-300"
+        className="grid h-5 w-5 place-items-center rounded-full text-zinc-400 transition hover:bg-white/10 hover:text-teal-200"
       >
         <HelpCircle className="h-3.5 w-3.5" />
       </button>
@@ -354,7 +354,7 @@ function CarryInHelp() {
             role="tooltip"
             onMouseLeave={() => setOpen(false)}
             style={{ top: pos.top, left: pos.left }}
-            className="fixed z-50 w-64 rounded-xl border border-white/10 bg-ink-850 p-3 text-left text-xs leading-relaxed text-slate-300 shadow-xl shadow-black/40"
+            className="fixed z-50 w-64 rounded-xl border border-white/10 bg-ink-850 p-3 text-left text-xs leading-relaxed text-zinc-200 shadow-xl shadow-black/40"
           >
             {CARRY_IN_INCOME_HELP}
           </span>,

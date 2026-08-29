@@ -48,7 +48,7 @@ function App() {
 
   if (authLoading) {
     return (
-      <div className="grid min-h-screen place-items-center text-slate-500">
+      <div className="grid min-h-screen place-items-center text-zinc-300">
         <div className="text-center">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-teal-300" />
           <p className="mt-4 text-sm">Kontrollerar inloggning…</p>
@@ -71,7 +71,7 @@ function App() {
               <h1 className="font-display text-lg font-bold leading-none text-zinc-50">
                 Ven<span className="text-teal-300">ly</span>
               </h1>
-              <p className="mt-0.5 hidden truncate text-xs text-zinc-500 sm:block">Smartare kontroll över din ekonomi</p>
+              <p className="mt-0.5 hidden truncate text-xs text-zinc-300 sm:block">Smartare kontroll över din ekonomi</p>
             </div>
           </div>
           <UserMenu user={user} onSignOut={signOut} />
@@ -85,7 +85,7 @@ function App() {
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`relative flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium transition-all duration-200 sm:px-4 ${active ? 'text-teal-300' : 'text-zinc-400 hover:text-zinc-200'}`}
+                className={`relative flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium transition-all duration-200 sm:px-4 ${active ? 'text-teal-300' : 'text-zinc-300 hover:text-zinc-50'}`}
               >
                 <t.icon className="h-4 w-4 shrink-0" />
                 <span className="hidden sm:inline">{t.label}</span>
@@ -104,7 +104,7 @@ function App() {
         )}
 
         {finance.loading ? (
-          <div className="grid place-items-center py-32 text-slate-500">
+          <div className="grid place-items-center py-32 text-zinc-300">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-teal-300" />
             <p className="mt-4 text-sm">Laddar din ekonomi…</p>
           </div>
@@ -144,7 +144,7 @@ function App() {
         )}
       </main>
 
-      <footer className="page-shell flex flex-wrap items-center justify-center gap-2 pb-8 pt-4 text-center text-xs text-slate-600">
+      <footer className="page-shell flex flex-wrap items-center justify-center gap-2 pb-8 pt-4 text-center text-xs text-zinc-300">
         <Logo size={28} className="opacity-90" />
         <span>Venly · Smartare kontroll över din ekonomi.</span>
       </footer>

@@ -147,9 +147,9 @@ export default function MonthlyView({
   };
 
   const stats = [
-    { label: 'Inkomster', value: totals.income, icon: Wallet, color: 'text-teal-300', ring: 'ring-teal-400/15' },
-    { label: 'Kostnader', value: totals.expenses, icon: ShoppingBag, color: 'text-rose-300', ring: 'ring-rose-300/15' },
-    { label: 'Sparande', value: totals.savings, icon: PiggyBank, color: 'text-sky-300', ring: 'ring-sky-400/15' },
+    { label: 'Inkomster totalt', value: totals.income, icon: Wallet, color: 'text-teal-200', ring: 'ring-teal-400/15' },
+    { label: 'Utgifter totalt', value: totals.expenses, icon: ShoppingBag, color: 'text-rose-200', ring: 'ring-rose-300/15' },
+    { label: 'Sparande totalt', value: totals.savings, icon: PiggyBank, color: 'text-sky-200', ring: 'ring-sky-400/15' },
   ];
 
   return (
@@ -163,7 +163,7 @@ export default function MonthlyView({
             <ChevronLeft className="h-5 w-5" />
           </button>
           <div className="min-w-0 flex-1 text-center sm:min-w-[11rem] sm:flex-none">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">Månadsöversikt</div>
+            <div className="text-xs font-medium uppercase tracking-wide text-zinc-300">Månadsöversikt</div>
             <div className="font-display text-lg font-bold capitalize text-zinc-50">{monthLabel(month)}</div>
           </div>
           <button
@@ -177,9 +177,9 @@ export default function MonthlyView({
         <div className={`flex min-w-0 w-full items-center gap-3 px-5 py-3.5 sm:w-auto ${totals.net >= 0 ? 'metric-positive' : 'metric-negative'}`}>
           {totals.net >= 0 ? <TrendingUp className="h-5 w-5 text-teal-300" /> : <TrendingDown className="h-5 w-5 text-rose-300" />}
           <div>
-            <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Nettoresultat</div>
-            <div className={`stat-num text-2xl ${totals.net >= 0 ? 'text-teal-300' : 'text-rose-300'}`}>{formatKr(totals.net)}</div>
-            <div className="text-[11px] text-zinc-600">exkl. saldo på lönekontot</div>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-200">Nettoresultat</div>
+            <div className={`stat-num text-2xl ${totals.net >= 0 ? 'text-teal-200' : 'text-rose-200'}`}>{formatKr(totals.net)}</div>
+            <div className="text-[11px] text-zinc-300">exkl. saldo på lönekontot</div>
           </div>
         </div>
       </header>
@@ -205,9 +205,9 @@ export default function MonthlyView({
             </span>
             <div className="min-w-0 flex-1">
               <h3 className="font-display font-semibold text-teal-200">Starta 2-minutersrutinen</h3>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-zinc-300">
                 {monthLabel(month)} är tom. Kopiera poster och sparfördelning från{' '}
-                <b className="text-slate-200">{monthLabel(previousMonthWithData!)}</b> och justera bara det som ändrats.
+                <b className="text-zinc-50">{monthLabel(previousMonthWithData!)}</b> och justera bara det som ändrats.
               </p>
               <button
                 onClick={copyPrevious}
@@ -234,7 +234,7 @@ export default function MonthlyView({
                   <h3 className="font-display font-semibold text-teal-300">
                     {surplusNotice === 'cut' ? 'Sparande justerat!' : 'Överskott fördelat!'}
                   </h3>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-zinc-300">
                     {surplusNotice === 'cut'
                       ? `${formatKr(appliedAmount)} har sänkts på ${appliedLabels || 'dina sparanderader'}.`
                       : `${formatKr(appliedAmount)} har lagts till på ${appliedLabels || 'dina sparanderader'}.`}
@@ -243,7 +243,7 @@ export default function MonthlyView({
               ) : showDeficit ? (
                 <>
                   <h3 className="font-display font-semibold text-amber-300">Förslag: Sänk sparande vid underskott</h3>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-zinc-300">
                     Nettoresultatet är {formatKr(totals.net)}. Förslag utifrån dina rader med saldo:
                     {' '}
                     {deficitCuts.map((c) => `${c.name} −${formatKr(c.reduce)}`).join(', ')}.
@@ -268,7 +268,7 @@ export default function MonthlyView({
               ) : (
                 <>
                   <h3 className="font-display font-semibold text-sky-300">Förslag: Öka ditt sparande</h3>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-zinc-300">
                     Ditt nettoresultat överstiger 10% av inkomsten. {formatKr(boostAmount)} kan flyttas till sparande
                     utan att netto går under 10% eller blir negativt.
                   </p>
@@ -300,7 +300,7 @@ export default function MonthlyView({
               <s.icon className="h-5 w-5" />
             </span>
             <div>
-              <div className="text-xs text-slate-500">{s.label}</div>
+              <div className="text-xs font-medium text-zinc-200">{s.label}</div>
               <div className={`stat-num min-w-0 truncate text-xl ${s.color}`}>{formatKr(s.value)}</div>
             </div>
           </div>

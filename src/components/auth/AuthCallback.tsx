@@ -184,7 +184,7 @@ export default function AuthCallback({ onDone }: { onDone: () => void }) {
   }, [onDone]);
 
   return (
-    <div className="grid min-h-screen place-items-center text-slate-500">
+    <div className="grid min-h-screen place-items-center text-zinc-300">
       <div className="text-center">
         <Logo size={40} className="mx-auto mb-4" />
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-teal-300" />

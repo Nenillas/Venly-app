@@ -27,8 +27,8 @@ export default class ErrorBoundary extends Component<Props, State> {
       <div className="grid min-h-dvh min-h-screen place-items-center px-4 py-10">
         <div className="card w-full max-w-md p-6 text-center">
           <Logo size={40} className="mx-auto mb-4" />
-          <h1 className="font-display text-xl font-bold text-slate-50">Något gick fel</h1>
-          <p className="mt-2 text-sm text-slate-400">
+          <h1 className="font-display text-xl font-bold text-zinc-50">Något gick fel</h1>
+          <p className="mt-2 text-sm text-zinc-300">
             Sidan kunde inte laddas. Felet är loggat i webbläsarens konsol.
           </p>
           <pre className="mt-4 max-h-40 overflow-auto rounded-xl bg-black/40 px-3 py-2 text-left text-xs text-rose-300 whitespace-pre-wrap">

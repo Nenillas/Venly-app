@@ -165,7 +165,7 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
 
   if (!isResettingPassword) {
     return (
-      <div className="grid min-h-screen place-items-center text-slate-500">
+      <div className="grid min-h-screen place-items-center text-zinc-300">
         <div className="text-center">
           <Logo size={40} className="mx-auto mb-4" />
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-teal-300" />
@@ -180,20 +180,20 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
       <div className="mb-8 flex items-center gap-3">
         <Logo size={44} />
         <div>
-          <h1 className="font-display text-2xl font-bold leading-none text-slate-50">
+          <h1 className="font-display text-2xl font-bold leading-none text-zinc-50">
             Ven<span className="text-teal-300">ly</span>
           </h1>
-          <p className="mt-1 text-sm text-slate-500">Välj ett nytt lösenord</p>
+          <p className="mt-1 text-sm text-zinc-300">Välj ett nytt lösenord</p>
         </div>
       </div>
 
       <section className="card w-full max-w-md p-6 sm:p-8">
-        <h2 className="font-display text-xl font-bold text-slate-50">Återställ lösenord</h2>
-        <p className="mt-1 mb-5 text-sm text-slate-500">Ange ett nytt lösenord för ditt konto.</p>
+        <h2 className="font-display text-xl font-bold text-zinc-50">Återställ lösenord</h2>
+        <p className="mt-1 mb-5 text-sm text-zinc-300">Ange ett nytt lösenord för ditt konto.</p>
 
         <form onSubmit={submit} className="space-y-3">
           <label className="block" htmlFor="new-password">
-            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-400">
+            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-zinc-300">
               <Lock className="h-3.5 w-3.5" /> Nytt lösenord
             </span>
             <input
@@ -209,7 +209,7 @@ export default function ResetPassword({ onLeave }: { onLeave: () => void }) {
             />
           </label>
           <label className="block" htmlFor="confirm-password">
-            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-400">
+            <span className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-zinc-300">
               <Lock className="h-3.5 w-3.5" /> Bekräfta lösenord
             </span>
             <input

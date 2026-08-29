@@ -38,10 +38,10 @@ export default function PayrollSurplusSection({
   return (
     <section className="card relative z-[1] grid min-w-0 gap-6 p-5 sm:p-6 md:grid-cols-2 animate-fade-in">
       <div>
-        <label htmlFor={inputId} className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+        <label htmlFor={inputId} className="text-[11px] font-medium uppercase tracking-wide text-zinc-300">
           Kvar på lönekontot vid nästa lön
         </label>
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="mt-1 text-xs text-zinc-300">
           Faktiskt saldo – räknas inte in i nettoresultatet.
         </p>
         <div className="field relative z-[1] mt-4 flex items-center gap-2 px-4 py-3.5">
@@ -62,7 +62,7 @@ export default function PayrollSurplusSection({
             }}
             className="relative z-[1] stat-num min-w-0 flex-1 bg-transparent pr-2 text-right text-2xl text-zinc-50 outline-none"
           />
-          <span className="pointer-events-none shrink-0 text-sm text-zinc-500">kr</span>
+          <span className="pointer-events-none shrink-0 text-sm text-zinc-300">kr</span>
         </div>
       </div>
 
@@ -71,8 +71,8 @@ export default function PayrollSurplusSection({
           <Sparkles className="h-5 w-5" />
           <h3 className="font-display font-semibold">Verkställ överskott</h3>
         </div>
-        <p className="mt-1 text-sm text-zinc-400">
-          Fördela automatiskt <b className="text-teal-300">{formatKr(Math.max(0, meta.ending_balance))}</b> mellan {formatSavingsList(savingsNames)}.
+        <p className="mt-1 text-sm text-zinc-300">
+          Fördela automatiskt <b className="text-teal-200">{formatKr(Math.max(0, meta.ending_balance))}</b> mellan {formatSavingsList(savingsNames)}.
         </p>
         <button
           type="button"

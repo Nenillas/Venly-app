@@ -27,11 +27,11 @@ export default function UserMenu({ user, onSignOut }: { user: AuthUser; onSignOu
           <User className="h-4 w-4" />
         </span>
         <span className="hidden truncate sm:inline">{email}</span>
-        <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+        <ChevronDown className="h-4 w-4 shrink-0 text-zinc-300" />
       </button>
       {open && (
         <div className="absolute right-0 z-50 mt-2 w-64 max-w-[calc(100vw-1.5rem)] rounded-xl border border-white/10 bg-ink-900 p-2 shadow-xl shadow-black/40 animate-scale-in">
-          <div className="truncate px-3 py-2 text-xs text-slate-500">{email}</div>
+          <div className="truncate px-3 py-2 text-xs text-zinc-300">{email}</div>
           <button
             type="button"
             onClick={() => { setOpen(false); onSignOut(); }}
