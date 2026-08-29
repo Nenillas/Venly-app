@@ -12,6 +12,7 @@ import AuthView from '@/components/auth/AuthView';
 import AuthCallback from '@/components/auth/AuthCallback';
 import ResetPassword from '@/pages/ResetPassword';
 import UserMenu from '@/components/auth/UserMenu';
+import { usePaydayDate } from '@/hooks/usePaydayDate';
 import Logo from '@/components/Logo';
 
 type Tab = 'monthly' | 'payments' | 'analytics' | 'insight';
@@ -25,6 +26,7 @@ const TABS: { id: Tab; label: string; icon: typeof Wallet }[] = [
 
 function App() {
   const { user, loading: authLoading, signOut } = useAuth();
+  const { paydayDate, setPaydayDate, saving: paydaySaving } = usePaydayDate(user);
   const [tab, setTab] = useState<Tab>('monthly');
   const [month, setMonth] = useState(currentMonth);
   const [handlingCallback, setHandlingCallback] = useState(() => isAuthCallbackLocation());
@@ -74,7 +76,13 @@ function App() {
               <p className="mt-0.5 hidden truncate text-xs text-zinc-300 sm:block">Smartare kontroll över din ekonomi</p>
             </div>
           </div>
-          <UserMenu user={user} onSignOut={signOut} />
+          <UserMenu
+            user={user}
+            paydayDate={paydayDate}
+            paydaySaving={paydaySaving}
+            onPaydayDateChange={setPaydayDate}
+            onSignOut={signOut}
+          />
         </div>
 
         <nav className="page-shell flex gap-1 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -119,6 +127,7 @@ function App() {
             onDelete={finance.deleteEntry}
             onCopyMonth={finance.copyMonth}
             onUpdateMeta={finance.updateMeta}
+            paydayDate={paydayDate}
           />
         ) : tab === 'payments' ? (
           <PaymentsView

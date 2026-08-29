@@ -6,11 +6,13 @@ import {
 } from 'lucide-react';
 import { Category, Entry, MonthMeta, isCarryInIncome, CARRY_IN_INCOME_NAME, resolveSavingsTargets } from '@/lib/types';
 import { amountToBoostSavings, deficitSavingsCuts, splitProportionally, totalsFor } from '@/lib/calculations';
+import { dailyAllowance, DEFAULT_PAYDAY_DATE, nextPaydayDate, remainingDaysUntilPayday, remainingDisposableAmount, type PaydayDate } from '@/lib/payday';
 import { formatKr, monthLabel, addMonths } from '@/lib/format';
 import { dockSurplusSection, readDockedUntil } from '@/lib/surplusPlacement';
 import EntryList from './EntryList';
 import SurplusModal, { type SurplusAllocation } from './SurplusModal';
 import PayrollSurplusSection from './PayrollSurplusSection';
+import DailyAllowanceBadge from './DailyAllowanceBadge';
 
 interface Props {
   month: string;
@@ -22,10 +24,12 @@ interface Props {
   onDelete: (id: string) => Promise<void>;
   onCopyMonth: (fromMonth: string, toMonth: string) => Promise<void>;
   onUpdateMeta: (month: string, patch: Partial<Omit<MonthMeta, 'id' | 'month'>>) => Promise<void>;
+  paydayDate?: PaydayDate;
 }
 
 export default function MonthlyView({
   month, onMonthChange, entries, getMeta, onAdd, onUpdate, onDelete, onCopyMonth, onUpdateMeta,
+  paydayDate = DEFAULT_PAYDAY_DATE,
 }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalSurplus, setModalSurplus] = useState(0);
@@ -152,10 +156,15 @@ export default function MonthlyView({
     { label: 'Sparande totalt', value: totals.savings, icon: PiggyBank, color: 'text-sky-200', ring: 'ring-sky-400/15' },
   ];
 
+  const disposable = remainingDisposableAmount(totals);
+  const payday = nextPaydayDate(new Date(), paydayDate);
+  const remainingDays = remainingDaysUntilPayday(new Date(), paydayDate);
+  const dailyAmount = dailyAllowance(disposable, remainingDays);
+
   return (
     <div className="w-full min-w-0 space-y-6">
-      <header className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 animate-fade-in">
-        <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
+      <header className="card flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between sm:p-6 animate-fade-in">
+        <div className="flex w-full min-w-0 items-center gap-2 lg:w-auto">
           <button
             type="button"
             onClick={() => { setSurplusNotice('idle'); onMonthChange(addMonths(month, -1)); }}
@@ -174,13 +183,20 @@ export default function MonthlyView({
           </button>
         </div>
 
-        <div className={`flex min-w-0 w-full items-center gap-3 px-5 py-3.5 sm:w-auto ${totals.net >= 0 ? 'metric-positive' : 'metric-negative'}`}>
-          {totals.net >= 0 ? <TrendingUp className="h-5 w-5 text-teal-300" /> : <TrendingDown className="h-5 w-5 text-rose-300" />}
-          <div>
-            <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-200">Nettoresultat</div>
-            <div className={`stat-num text-2xl ${totals.net >= 0 ? 'text-teal-200' : 'text-rose-200'}`}>{formatKr(totals.net)}</div>
-            <div className="text-[11px] text-zinc-300">exkl. saldo på lönekontot</div>
+        <div className="flex min-w-0 w-full flex-col gap-3 sm:flex-row sm:items-stretch lg:w-auto">
+          <div className={`flex min-w-0 flex-1 items-center gap-3 px-5 py-3.5 sm:min-w-[12rem] ${totals.net >= 0 ? 'metric-positive' : 'metric-negative'}`}>
+            {totals.net >= 0 ? <TrendingUp className="h-5 w-5 shrink-0 text-teal-300" /> : <TrendingDown className="h-5 w-5 shrink-0 text-rose-300" />}
+            <div className="min-w-0">
+              <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-200">Nettoresultat</div>
+              <div className={`stat-num truncate text-2xl ${totals.net >= 0 ? 'text-teal-200' : 'text-rose-200'}`}>{formatKr(totals.net)}</div>
+              <div className="text-[11px] text-zinc-300">exkl. saldo på lönekontot</div>
+            </div>
           </div>
+          <DailyAllowanceBadge
+            dailyAmount={dailyAmount}
+            remainingDays={remainingDays}
+            paydayDay={payday.getDate()}
+          />
         </div>
       </header>
 
