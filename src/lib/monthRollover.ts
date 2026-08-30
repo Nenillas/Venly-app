@@ -1,8 +1,8 @@
-import { isCarryInIncome, type Entry } from './types';
+import { isCarryInIncomeName, type Entry } from './types';
 
 /** Ingående balans is month-specific (Verkställ) and must not roll over. */
 export function isRolloverSourceEntry(entry: Pick<Entry, 'category' | 'name'>): boolean {
-  return !isCarryInIncome(entry);
+  return !isCarryInIncomeName(entry.name);
 }
 
 export function latestPrecedingMonth(months: string[], target: string): string | null {

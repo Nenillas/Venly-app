@@ -77,12 +77,29 @@ export type SavingsTarget = {
 
 export const CARRY_IN_INCOME_NAME = 'Ingående balans';
 
-export const CARRY_IN_INCOME_HELP =
-  "Denna rad visar den totala summan som fördelats från 'Kvar på lönekontot vid nästa löning'. Summan läggs till under inkomster för att balansera det målinriktade sparandet så att månadens nettoresultat blir korrekt.";
+const CARRY_IN_NAME_RE = /ing(?:[aåä]ende)\s+balans/i;
+
+function foldName(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** True for Ingående balans regardless of category or extra whitespace. */
+export function isCarryInIncomeName(name: string): boolean {
+  const folded = foldName(name);
+  return folded.includes('ingaende balans') || CARRY_IN_NAME_RE.test(name);
+}
 
 export function isCarryInIncome(entry: Pick<Entry, 'category' | 'name'>): boolean {
-  return entry.category === 'income' && entry.name.trim().toLowerCase() === CARRY_IN_INCOME_NAME.toLowerCase();
+  return entry.category === 'income' && isCarryInIncomeName(entry.name);
 }
+
+export const CARRY_IN_INCOME_HELP =
+  "Denna rad visar den totala summan som fördelats från 'Kvar på lönekontot vid nästa löning'. Summan läggs till under inkomster för att balansera det målinriktade sparandet så att månadens nettoresultat blir korrekt.";
 
 export const SAVINGS_TARGETS = {
   buffer: 'Buffert',

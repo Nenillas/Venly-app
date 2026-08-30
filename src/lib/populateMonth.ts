@@ -1,4 +1,4 @@
-import { SAVINGS_BUCKETS, parseRecurrence, type Entry, type MonthMeta } from '@/lib/types';
+import { SAVINGS_BUCKETS, isCarryInIncomeName, parseRecurrence, type Entry, type MonthMeta } from '@/lib/types';
 import {
   asUuidOrNull,
   entryWritePayload,
@@ -210,6 +210,10 @@ export async function copyMonthItems(
     return { skipped: true, inserted: [], meta: existingMeta ?? null };
   }
   const source = (sourceRows ?? [])
+    .filter((row) => {
+      const rec = row as Record<string, unknown>;
+      return !isCarryInIncomeName(String(rec.name ?? rec.title ?? ''));
+    })
     .map((row) => toEntry(row as Record<string, unknown>, uid))
     .filter(isRolloverSourceEntry);
   if (source.length === 0) {

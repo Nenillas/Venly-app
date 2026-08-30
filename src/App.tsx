@@ -84,16 +84,25 @@ function App() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <button
-              type="button"
-              onClick={togglePrivacyMode}
-              className="icon-btn"
-              aria-pressed={isPrivacyModeEnabled}
-              aria-label={isPrivacyModeEnabled ? 'Visa belopp' : 'Dölj belopp'}
-              title={isPrivacyModeEnabled ? 'Visa belopp' : 'Integritetsläge'}
-            >
-              {isPrivacyModeEnabled ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+            <div className="relative group/privacy">
+              <button
+                type="button"
+                onClick={togglePrivacyMode}
+                className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition-all duration-200 ${
+                  isPrivacyModeEnabled
+                    ? 'border-teal-400/40 bg-teal-400/10 text-teal-200 hover:bg-teal-400/20'
+                    : 'border-white/10 bg-white/[0.04] text-zinc-300 hover:border-white/20 hover:bg-white/[0.09] hover:text-zinc-50'
+                }`}
+                aria-pressed={isPrivacyModeEnabled}
+                aria-label={isPrivacyModeEnabled ? 'Visa belopp' : 'Dölj belopp'}
+                title={isPrivacyModeEnabled ? 'Visa belopp' : 'Integritetsläge'}
+              >
+                {isPrivacyModeEnabled ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+              <span className="pointer-events-none absolute right-0 top-[calc(100%+6px)] z-50 hidden whitespace-nowrap rounded-lg border border-white/10 bg-ink-850 px-2.5 py-1 text-[11px] font-medium text-zinc-200 shadow-lg shadow-black/40 group-hover/privacy:block">
+                {isPrivacyModeEnabled ? 'Visa belopp' : 'Integritetsläge — Dölj belopp'}
+              </span>
+            </div>
             <UserMenu
               user={user}
               paydayDate={paydayDate}
