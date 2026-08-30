@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { Wallet, LineChart, CheckSquare, Lightbulb } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Wallet, LineChart, CheckSquare, Lightbulb, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFinance } from '@/hooks/useFinance';
 import { currentMonth } from '@/lib/format';
@@ -13,6 +13,7 @@ import AuthCallback from '@/components/auth/AuthCallback';
 import ResetPassword from '@/pages/ResetPassword';
 import UserMenu from '@/components/auth/UserMenu';
 import { usePaydayDate } from '@/hooks/usePaydayDate';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import Logo from '@/components/Logo';
 
 type Tab = 'monthly' | 'payments' | 'analytics' | 'insight';
@@ -27,6 +28,7 @@ const TABS: { id: Tab; label: string; icon: typeof Wallet }[] = [
 function App() {
   const { user, loading: authLoading, signOut } = useAuth();
   const { paydayDate, setPaydayDate, saving: paydaySaving } = usePaydayDate(user);
+  const { isPrivacyModeEnabled, togglePrivacyMode } = usePrivacyMode();
   const [tab, setTab] = useState<Tab>('monthly');
   const [month, setMonth] = useState(currentMonth);
   const [handlingCallback, setHandlingCallback] = useState(() => isAuthCallbackLocation());
@@ -39,6 +41,11 @@ function App() {
   }, []);
   const leaveResetPassword = useCallback(() => setResetPassword(isResetPasswordLocation()), []);
   const finance = useFinance(user?.id, !authLoading && !handlingCallback && !resetPassword && Boolean(user));
+
+  useEffect(() => {
+    if (authLoading || handlingCallback || resetPassword || !user || finance.loading) return;
+    void finance.ensureMonthBudget(month);
+  }, [month, finance.loading, finance.ensureMonthBudget, authLoading, handlingCallback, resetPassword, user]);
 
   if (resetPassword) {
     return <ResetPassword onLeave={leaveResetPassword} />;
@@ -76,13 +83,25 @@ function App() {
               <p className="mt-0.5 hidden truncate text-xs text-zinc-300 sm:block">Smartare kontroll över din ekonomi</p>
             </div>
           </div>
-          <UserMenu
-            user={user}
-            paydayDate={paydayDate}
-            paydaySaving={paydaySaving}
-            onPaydayDateChange={setPaydayDate}
-            onSignOut={signOut}
-          />
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <button
+              type="button"
+              onClick={togglePrivacyMode}
+              className="icon-btn"
+              aria-pressed={isPrivacyModeEnabled}
+              aria-label={isPrivacyModeEnabled ? 'Visa belopp' : 'Dölj belopp'}
+              title={isPrivacyModeEnabled ? 'Visa belopp' : 'Integritetsläge'}
+            >
+              {isPrivacyModeEnabled ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+            <UserMenu
+              user={user}
+              paydayDate={paydayDate}
+              paydaySaving={paydaySaving}
+              onPaydayDateChange={setPaydayDate}
+              onSignOut={signOut}
+            />
+          </div>
         </div>
 
         <nav className="page-shell flex gap-1 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -128,6 +147,7 @@ function App() {
             onCopyMonth={finance.copyMonth}
             onUpdateMeta={finance.updateMeta}
             paydayDate={paydayDate}
+            rolloverBusy={finance.rolloverBusy}
           />
         ) : tab === 'payments' ? (
           <PaymentsView

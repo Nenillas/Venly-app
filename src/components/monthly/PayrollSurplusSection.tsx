@@ -1,7 +1,8 @@
 import { useEffect, useId, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { MonthMeta, SAVINGS_BUCKETS } from '@/lib/types';
-import { formatKr } from '@/lib/format';
+import { SensitiveKr } from '@/components/SensitiveKr';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 
 interface Props {
   meta: MonthMeta;
@@ -21,6 +22,7 @@ function formatSavingsList(names: string[]): string {
 export default function PayrollSurplusSection({
   meta, savingsNames, onCommitBalance, onOpenModal,
 }: Props) {
+  const { isPrivacyModeEnabled } = usePrivacyMode();
   const inputId = useId();
   const [value, setValue] = useState(String(meta.ending_balance ?? 0));
   const [focused, setFocused] = useState(false);
@@ -50,17 +52,19 @@ export default function PayrollSurplusSection({
             type="text"
             inputMode="numeric"
             autoComplete="off"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onFocus={() => setFocused(true)}
+            value={isPrivacyModeEnabled ? '••••' : value}
+            onChange={(e) => { if (!isPrivacyModeEnabled) setValue(e.target.value); }}
+            onFocus={() => { if (!isPrivacyModeEnabled) setFocused(true); }}
             onBlur={() => {
+              if (isPrivacyModeEnabled) return;
               setFocused(false);
               commit();
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
             }}
-            className="relative z-[1] stat-num min-w-0 flex-1 bg-transparent pr-2 text-right text-2xl text-zinc-50 outline-none"
+            readOnly={isPrivacyModeEnabled}
+            className={`relative z-[1] stat-num min-w-0 flex-1 bg-transparent pr-2 text-right text-2xl text-zinc-50 outline-none ${isPrivacyModeEnabled ? 'blur-sm select-none' : ''}`}
           />
           <span className="pointer-events-none shrink-0 text-sm text-zinc-300">kr</span>
         </div>
@@ -72,7 +76,7 @@ export default function PayrollSurplusSection({
           <h3 className="font-display font-semibold">Verkställ överskott</h3>
         </div>
         <p className="mt-1 text-sm text-zinc-300">
-          Fördela automatiskt <b className="text-teal-200">{formatKr(Math.max(0, meta.ending_balance))}</b> mellan {formatSavingsList(savingsNames)}.
+          Fördela automatiskt <b className="text-teal-200"><SensitiveKr value={Math.max(0, meta.ending_balance)} /></b> mellan {formatSavingsList(savingsNames)}.
         </p>
         <button
           type="button"

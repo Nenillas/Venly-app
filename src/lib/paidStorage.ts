@@ -35,6 +35,28 @@ export function writePaymentType(userId: string, id: string, type: string): void
   localStorage.setItem(scopedKey(TYPE_KEY, userId), JSON.stringify(map));
 }
 
+const RECURRENCE_KEY = 'venly.recurrence';
+
+export type RecurrenceLocal = { recurrence: string; recurrence_anchor: string | null };
+
+export function readRecurrenceMap(userId: string): Record<string, RecurrenceLocal> {
+  try {
+    const raw = localStorage.getItem(scopedKey(RECURRENCE_KEY, userId));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, RecurrenceLocal>;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function writeRecurrence(userId: string, id: string, value: RecurrenceLocal): void {
+  const map = readRecurrenceMap(userId);
+  if (!value.recurrence || value.recurrence === 'none') delete map[id];
+  else map[id] = value;
+  localStorage.setItem(scopedKey(RECURRENCE_KEY, userId), JSON.stringify(map));
+}
+
 function readFlagMap(key: string): Record<string, boolean> {
   try {
     const raw = localStorage.getItem(key);

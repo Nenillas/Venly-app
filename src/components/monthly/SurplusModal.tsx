@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { X, PiggyBank, TrendingUp, Plane, Target, Sparkles, Check } from 'lucide-react';
 import { MonthMeta, resolveSavingsTargets, SAVINGS_TARGETS, type Entry, type SavingsTarget } from '@/lib/types';
 import { MonthTotals, savingsSplitWeights, splitProportionally } from '@/lib/calculations';
-import { formatKr } from '@/lib/format';
+import { SensitiveKr } from '@/components/SensitiveKr';
 
 export type SurplusAllocation = { id: string | null; name: string; amount: number };
 
@@ -109,11 +109,11 @@ export default function SurplusModal({
         <div className="mt-5 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-black/20 p-4">
             <div className="text-xs text-zinc-300">Faktiska levnadskostnader</div>
-            <div className="stat-num mt-1 text-lg text-zinc-50">{formatKr(livingCosts)}</div>
+            <div className="stat-num mt-1 text-lg text-zinc-50"><SensitiveKr value={livingCosts} /></div>
           </div>
           <div className="rounded-2xl border border-teal-400/15 bg-teal-400/[0.06] p-4">
             <div className="text-xs text-teal-100">Överskott att fördela</div>
-            <div className="stat-num mt-1 text-lg text-teal-200">{formatKr(surplus)}</div>
+            <div className="stat-num mt-1 text-lg text-teal-200"><SensitiveKr value={surplus} /></div>
           </div>
         </div>
 
@@ -130,7 +130,7 @@ export default function SurplusModal({
                     <span className="truncate">{t.name}</span>
                   </span>
                   <span className="ml-2 shrink-0 tabular-nums text-zinc-300">
-                    <b className={color.text}>{formatKr(parts[i] ?? 0)}</b> · {pct}%
+                    <b className={color.text}><SensitiveKr value={parts[i] ?? 0} /></b> · {pct}%
                   </span>
                 </div>
                 <input
@@ -168,11 +168,11 @@ export default function SurplusModal({
               <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-zinc-300">
                 <span>
                   Fördelat till sparande: <b className="tabular-nums text-zinc-50">{sum}%</b>
-                  {' '}({formatKr(allocatedKr)})
+                  {' '}(<SensitiveKr value={allocatedKr} />)
                 </span>
                 <span>
                   Kvar på kontot: <b className="tabular-nums text-zinc-50">{remainingPct}%</b>
-                  {' '}({formatKr(leftoverKr)})
+                  {' '}(<SensitiveKr value={leftoverKr} />)
                 </span>
               </div>
             </>

@@ -1,4 +1,5 @@
 import { canonicalItemName, isCarryInIncome, type Entry, type MonthMeta } from './types';
+import { entryAmountForMonth } from './recurrence';
 
 export interface MonthTotals {
   income: number;
@@ -27,7 +28,7 @@ export type TotalsMode = 'ledger' | 'operational';
  */
 export function totalsFor(entries: Entry[], mode: TotalsMode = 'ledger'): MonthTotals {
   const sum = (cat: string) =>
-    entries.filter((e) => e.category === cat).reduce((a, e) => a + (Number(e.amount) || 0), 0);
+    entries.filter((e) => e.category === cat).reduce((a, e) => a + entryAmountForMonth(e), 0);
 
   let income = sum('income');
   const fixed = sum('fixed');

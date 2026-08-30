@@ -1,5 +1,8 @@
 export type Category = 'income' | 'fixed' | 'variable' | 'savings';
 export type PaymentType = 'invoice' | 'autogiro' | 'card_pot';
+export type Recurrence = 'none' | 'quarterly' | 'semiannual' | 'annual';
+export type RecurrencePeriod = Exclude<Recurrence, 'none'>;
+export type PaymentMenuValue = PaymentType | RecurrencePeriod;
 
 export interface Entry {
   id: string;
@@ -9,6 +12,8 @@ export interface Entry {
   amount: number;
   paid: boolean;
   payment_type: PaymentType;
+  recurrence: Recurrence;
+  recurrence_anchor: string | null;
 }
 
 export interface MonthMeta {
@@ -35,6 +40,30 @@ export const PAYMENT_TYPE_LABELS: Record<PaymentType, string> = {
 };
 
 export const PAYMENT_TYPES: PaymentType[] = ['invoice', 'autogiro', 'card_pot'];
+
+export const RECURRENCE_LABELS: Record<RecurrencePeriod, string> = {
+  quarterly: 'Återkommande: Kvartal',
+  semiannual: 'Återkommande: Halvår',
+  annual: 'Återkommande: År',
+};
+
+export const RECURRENCE_BADGE: Record<RecurrencePeriod, string> = {
+  quarterly: 'Kvartal',
+  semiannual: 'Halvår',
+  annual: 'Årlig',
+};
+
+export const RECURRENCE_PERIODS: RecurrencePeriod[] = ['quarterly', 'semiannual', 'annual'];
+
+export function isRecurrencePeriod(value: string): value is RecurrencePeriod {
+  return value === 'quarterly' || value === 'semiannual' || value === 'annual';
+}
+
+export function parseRecurrence(raw: unknown): Recurrence {
+  const v = String(raw ?? '');
+  if (v === 'quarterly' || v === 'semiannual' || v === 'annual') return v;
+  return 'none';
+}
 
 export function isExpense(category: Category): boolean {
   return category === 'fixed' || category === 'variable';

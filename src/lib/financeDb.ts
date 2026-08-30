@@ -1,5 +1,5 @@
 import { requireSupabase } from '@/lib/supabase/client';
-import { Category, Entry, MonthMeta, PaymentType, canonicalItemName } from '@/lib/types';
+import { Category, Entry, MonthMeta, PaymentType, Recurrence, canonicalItemName, parseRecurrence } from '@/lib/types';
 import { logSupabaseError } from '@/lib/supabaseErrors';
 
 export const MONTHS_TABLE = 'monthly_records' as const;
@@ -125,6 +125,11 @@ export function parsePaymentType(row: Record<string, unknown>): PaymentType {
   return 'invoice';
 }
 
+export function parseRecurrenceAnchor(row: Record<string, unknown>): string | null {
+  const raw = String(row.recurrence_anchor ?? '');
+  return /^\d{4}-\d{2}$/.test(raw) ? raw : null;
+}
+
 export function normalizeEntry(row: Record<string, unknown>): Entry {
   const category = row.category as Category;
   return {
@@ -135,6 +140,8 @@ export function normalizeEntry(row: Record<string, unknown>): Entry {
     amount: Number(row.amount) || 0,
     paid: Boolean(row.paid ?? row.is_paid),
     payment_type: parsePaymentType(row),
+    recurrence: parseRecurrence(row.recurrence),
+    recurrence_anchor: parseRecurrenceAnchor(row),
   };
 }
 
@@ -145,7 +152,10 @@ export function entryWritePayload(input: {
   name: string;
   amount: number;
   payment_type?: PaymentType;
+  recurrence?: Recurrence;
+  recurrence_anchor?: string | null;
   monthlyRecordId?: string | null;
+  paid?: boolean;
 }): Record<string, unknown> {
   const user_id = asUuidOrNull(input.userId);
   if (!user_id) {
@@ -161,6 +171,11 @@ export function entryWritePayload(input: {
   const monthlyRecordId = asUuidOrNull(input.monthlyRecordId);
   if (monthlyRecordId) payload.monthly_record_id = monthlyRecordId;
   if (input.payment_type) payload.payment_type = input.payment_type;
+  if (input.paid === false) payload.paid = false;
+  if (input.recurrence && input.recurrence !== 'none') {
+    payload.recurrence = input.recurrence;
+    payload.recurrence_anchor = input.recurrence_anchor ?? input.month;
+  }
   return omitInvalidUuids(payload);
 }
 

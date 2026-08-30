@@ -64,6 +64,8 @@ export type Database = {
           paid: boolean | null;
           payment_type: string | null;
           is_autogiro: boolean | null;
+          recurrence: string;
+          recurrence_anchor: string | null;
           created_at: string | null;
         };
         Insert: {
@@ -77,6 +79,8 @@ export type Database = {
           paid?: boolean | null;
           payment_type?: string | null;
           is_autogiro?: boolean | null;
+          recurrence?: string;
+          recurrence_anchor?: string | null;
           created_at?: string | null;
         };
         Update: {
@@ -90,6 +94,8 @@ export type Database = {
           paid?: boolean | null;
           payment_type?: string | null;
           is_autogiro?: boolean | null;
+          recurrence?: string;
+          recurrence_anchor?: string | null;
           created_at?: string | null;
         };
         Relationships: [];

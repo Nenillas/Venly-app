@@ -6,7 +6,9 @@ import {
 import { ChevronLeft, ChevronRight, LineChart as LineIcon, BarChart3 } from 'lucide-react';
 import { Entry, MonthMeta } from '@/lib/types';
 import { healthScore, totalsFor, effectiveCarriedOverBalance } from '@/lib/calculations';
-import { addMonths, formatKr, formatPercent, monthLabel, monthShort } from '@/lib/format';
+import { addMonths, formatPercent, monthLabel, monthShort } from '@/lib/format';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { sensitiveKrText } from '@/components/SensitiveKr';
 import HealthScore from './HealthScore';
 
 const AXIS = '#cbd5e1';
@@ -20,6 +22,9 @@ interface Props {
 }
 
 export default function AnalyticsView({ month, onMonthChange, entries, getMeta }: Props) {
+  const { isPrivacyModeEnabled } = usePrivacyMode();
+  const moneyTick = (v: number) => (isPrivacyModeEnabled ? '••••' : `${v / 1000}k`);
+  const moneyTip = (v: unknown) => sensitiveKrText(Number(v), isPrivacyModeEnabled);
   const months = useMemo(
     () => Array.from(new Set(entries.map((e) => e.month))).sort().slice(-12),
     [entries],
@@ -92,8 +97,8 @@ export default function AnalyticsView({ month, onMonthChange, entries, getMeta }
               <LineChart data={lineData} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
                 <CartesianGrid stroke={GRID} vertical={false} />
                 <XAxis dataKey="name" stroke={AXIS} tickLine={false} axisLine={false} fontSize={12} className="capitalize" />
-                <YAxis stroke={AXIS} tickLine={false} axisLine={false} fontSize={12} tickFormatter={(v) => `${v / 1000}k`} />
-                <Tooltip {...tooltip} formatter={(v) => formatKr(Number(v))} />
+                <YAxis stroke={AXIS} tickLine={false} axisLine={false} fontSize={12} tickFormatter={moneyTick} />
+                <Tooltip {...tooltip} formatter={moneyTip} />
                 <Legend {...legend} />
                 <Line type="monotone" dataKey="Inkomster" stroke="#5eead4" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
                 <Line type="monotone" dataKey="Utgifter" stroke="#fda4af" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />

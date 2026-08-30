@@ -7,7 +7,10 @@ import {
 import { Category, Entry, MonthMeta, isCarryInIncome, CARRY_IN_INCOME_NAME, resolveSavingsTargets } from '@/lib/types';
 import { amountToBoostSavings, deficitSavingsCuts, splitProportionally, totalsFor } from '@/lib/calculations';
 import { dailyAllowance, DEFAULT_PAYDAY_DATE, nextPaydayDate, remainingDaysUntilPayday, remainingDisposableAmount, type PaydayDate } from '@/lib/payday';
-import { formatKr, monthLabel, addMonths } from '@/lib/format';
+import { monthLabel, addMonths } from '@/lib/format';
+import { entryAmountForMonth } from '@/lib/recurrence';
+import { SensitiveKr, sensitiveKrText } from '@/components/SensitiveKr';
+import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { dockSurplusSection, readDockedUntil } from '@/lib/surplusPlacement';
 import EntryList from './EntryList';
 import SurplusModal, { type SurplusAllocation } from './SurplusModal';
@@ -20,17 +23,20 @@ interface Props {
   entries: Entry[];
   getMeta: (month: string) => MonthMeta;
   onAdd: (month: string, category: Category, name: string, amount: number) => Promise<void>;
-  onUpdate: (id: string, patch: Partial<Pick<Entry, 'name' | 'amount' | 'paid' | 'payment_type'>>) => Promise<void>;
+  onUpdate: (id: string, patch: Partial<Pick<Entry, 'name' | 'amount' | 'paid' | 'payment_type' | 'recurrence' | 'recurrence_anchor'>>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onCopyMonth: (fromMonth: string, toMonth: string) => Promise<void>;
   onUpdateMeta: (month: string, patch: Partial<Omit<MonthMeta, 'id' | 'month'>>) => Promise<void>;
   paydayDate?: PaydayDate;
+  rolloverBusy?: boolean;
 }
 
 export default function MonthlyView({
   month, onMonthChange, entries, getMeta, onAdd, onUpdate, onDelete, onCopyMonth, onUpdateMeta,
   paydayDate = DEFAULT_PAYDAY_DATE,
+  rolloverBusy = false,
 }: Props) {
+  const { isPrivacyModeEnabled } = usePrivacyMode();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalSurplus, setModalSurplus] = useState(0);
   const [copying, setCopying] = useState(false);
@@ -54,7 +60,7 @@ export default function MonthlyView({
   }, [entries, month]);
 
   const byCat = (c: Category) => monthEntries.filter((e) => e.category === c);
-  const sum = (c: Category) => byCat(c).reduce((a, e) => a + e.amount, 0);
+  const sum = (c: Category) => byCat(c).reduce((a, e) => a + entryAmountForMonth(e), 0);
 
   const incomeEntries = useMemo(() => {
     const rows = monthEntries.filter((e) => e.category === 'income');
@@ -71,7 +77,7 @@ export default function MonthlyView({
   const showSuggestion = surplusNotice === 'idle' && boostAmount > 0 && savingsRows.length > 0;
   const showDeficit = surplusNotice === 'idle' && totals.net < 0 && deficitCuts.length > 0;
   const showApplied = surplusNotice === 'applied' || surplusNotice === 'cut';
-  const showCopyPrompt = monthEntries.length === 0 && previousMonthWithData !== null;
+  const showCopyPrompt = !rolloverBusy && monthEntries.length === 0 && previousMonthWithData !== null;
 
   const distributeExcessSurplus = async () => {
     if (savingsRows.length === 0 || boostAmount <= 0) return;
@@ -188,7 +194,7 @@ export default function MonthlyView({
             {totals.net >= 0 ? <TrendingUp className="h-5 w-5 shrink-0 text-teal-300" /> : <TrendingDown className="h-5 w-5 shrink-0 text-rose-300" />}
             <div className="min-w-0">
               <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-200">Nettoresultat</div>
-              <div className={`stat-num truncate text-2xl ${totals.net >= 0 ? 'text-teal-200' : 'text-rose-200'}`}>{formatKr(totals.net)}</div>
+              <div className={`stat-num truncate text-2xl ${totals.net >= 0 ? 'text-teal-200' : 'text-rose-200'}`}><SensitiveKr value={totals.net} /></div>
               <div className="text-[11px] text-zinc-300">exkl. saldo på lönekontot</div>
             </div>
           </div>
@@ -211,6 +217,10 @@ export default function MonthlyView({
           }}
           onOpenModal={openSurplusModal}
         />
+      )}
+
+      {rolloverBusy && monthEntries.length === 0 && (
+        <p className="text-sm text-zinc-300">För över poster från föregående månad…</p>
       )}
 
       {showCopyPrompt && (
@@ -252,17 +262,17 @@ export default function MonthlyView({
                   </h3>
                   <p className="mt-1 text-sm text-zinc-300">
                     {surplusNotice === 'cut'
-                      ? `${formatKr(appliedAmount)} har sänkts på ${appliedLabels || 'dina sparanderader'}.`
-                      : `${formatKr(appliedAmount)} har lagts till på ${appliedLabels || 'dina sparanderader'}.`}
+                      ? `${sensitiveKrText(appliedAmount, isPrivacyModeEnabled)} har sänkts på ${appliedLabels || 'dina sparanderader'}.`
+                      : `${sensitiveKrText(appliedAmount, isPrivacyModeEnabled)} har lagts till på ${appliedLabels || 'dina sparanderader'}.`}
                   </p>
                 </>
               ) : showDeficit ? (
                 <>
                   <h3 className="font-display font-semibold text-amber-300">Förslag: Sänk sparande vid underskott</h3>
                   <p className="mt-1 text-sm text-zinc-300">
-                    Nettoresultatet är {formatKr(totals.net)}. Förslag utifrån dina rader med saldo:
+                    Nettoresultatet är {sensitiveKrText(totals.net, isPrivacyModeEnabled)}. Förslag utifrån dina rader med saldo:
                     {' '}
-                    {deficitCuts.map((c) => `${c.name} −${formatKr(c.reduce)}`).join(', ')}.
+                    {deficitCuts.map((c) => `${c.name} −${sensitiveKrText(c.reduce, isPrivacyModeEnabled)}`).join(', ')}.
                   </p>
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                     <button
@@ -270,7 +280,7 @@ export default function MonthlyView({
                       onClick={applyDeficitCuts}
                       className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-300/90 px-4 py-2 text-sm font-semibold text-amber-950 transition-all duration-200 hover:bg-amber-200 sm:w-auto"
                     >
-                      <PiggyBank className="h-4 w-4" /> Sänk med {formatKr(deficitTotal)}
+                      <PiggyBank className="h-4 w-4" /> Sänk med {sensitiveKrText(deficitTotal, isPrivacyModeEnabled)}
                     </button>
                     <button
                       type="button"
@@ -285,7 +295,7 @@ export default function MonthlyView({
                 <>
                   <h3 className="font-display font-semibold text-sky-300">Förslag: Öka ditt sparande</h3>
                   <p className="mt-1 text-sm text-zinc-300">
-                    Ditt nettoresultat överstiger 10% av inkomsten. {formatKr(boostAmount)} kan flyttas till sparande
+                    Ditt nettoresultat överstiger 10% av inkomsten. {sensitiveKrText(boostAmount, isPrivacyModeEnabled)} kan flyttas till sparande
                     utan att netto går under 10% eller blir negativt.
                   </p>
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -293,7 +303,7 @@ export default function MonthlyView({
                       onClick={distributeExcessSurplus}
                       className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-300/90 px-4 py-2 text-sm font-semibold text-sky-950 transition-all duration-200 hover:bg-sky-200 sm:w-auto"
                     >
-                      <PiggyBank className="h-4 w-4" /> Fördela {formatKr(boostAmount)}
+                      <PiggyBank className="h-4 w-4" /> Fördela {sensitiveKrText(boostAmount, isPrivacyModeEnabled)}
                     </button>
                     <button
                       onClick={() => setSurplusNotice('dismissed')}
@@ -317,7 +327,7 @@ export default function MonthlyView({
             </span>
             <div>
               <div className="text-xs font-medium text-zinc-200">{s.label}</div>
-              <div className={`stat-num min-w-0 truncate text-xl ${s.color}`}>{formatKr(s.value)}</div>
+              <div className={`stat-num min-w-0 truncate text-xl ${s.color}`}><SensitiveKr value={s.value} /></div>
             </div>
           </div>
         ))}

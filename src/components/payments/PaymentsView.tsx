@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Check, CheckSquare, ChevronDown, ChevronLeft, ChevronRight, CreditCard, Repeat } from 'lucide-react';
-import { Category, CATEGORY_LABELS, Entry, PAYMENT_TYPE_LABELS } from '@/lib/types';
-import { formatKr, formatPercent, monthLabel, addMonths } from '@/lib/format';
+import { Category, CATEGORY_LABELS, Entry, PAYMENT_TYPE_LABELS, RECURRENCE_BADGE, isRecurrencePeriod } from '@/lib/types';
+import { formatPercent, monthLabel, addMonths } from '@/lib/format';
+import { isRecurrenceDue } from '@/lib/recurrence';
+import { SensitiveKr } from '@/components/SensitiveKr';
 
 interface Props {
   month: string;
@@ -37,7 +39,8 @@ function isPositiveCost(entry: Entry, month: string): boolean {
   return (
     entry.month === month &&
     COST_CATEGORIES.includes(entry.category) &&
-    paymentAmount(entry) > 0
+    paymentAmount(entry) > 0 &&
+    isRecurrenceDue(entry.recurrence, entry.recurrence_anchor, month)
   );
 }
 
@@ -111,7 +114,7 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
             <p className="mt-1 text-sm text-zinc-300">
               {total === 0
                 ? 'Endast fakturor över 0 kr räknas i checklistan. Autogiro och kortköp ligger i en egen lista under.'
-                : <>Kvar att betala: <b className="text-zinc-100">{formatKr(remaining)}</b></>}
+                : <>Kvar att betala: <b className="text-zinc-100"><SensitiveKr value={remaining} /></b></>}
             </p>
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/5">
               <div
@@ -160,7 +163,7 @@ export default function PaymentsView({ month, onMonthChange, entries, onTogglePa
                 {otherOpen ? 'Dölj Autogiro & Kortköp' : 'Visa Autogiro & Kortköp'}
               </h3>
               <p className="text-xs text-zinc-300">
-                {otherCount} {otherCount === 1 ? 'post' : 'poster'} · {formatKr(otherSum)} · ingår inte i checklistan
+                {otherCount} {otherCount === 1 ? 'post' : 'poster'} · <SensitiveKr value={otherSum} /> · ingår inte i checklistan
               </p>
             </div>
             <ChevronDown className={`h-5 w-5 text-zinc-400 transition ${otherOpen ? 'rotate-180' : ''}`} />
@@ -210,7 +213,7 @@ function OtherTypeList({
         <div className="min-w-0 flex-1">
           <h4 className="text-sm font-semibold text-zinc-50">{title}</h4>
           <p className="text-[11px] text-zinc-300">
-            {items.length} {items.length === 1 ? 'post' : 'poster'} · {formatKr(total)} · {hint}
+            {items.length} {items.length === 1 ? 'post' : 'poster'} · <SensitiveKr value={total} /> · {hint}
           </p>
         </div>
       </div>
@@ -226,9 +229,14 @@ function OtherTypeList({
                 <span className="inline-flex rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-300 ring-1 ring-white/10">
                   {PAYMENT_TYPE_LABELS[item.payment_type]}
                 </span>
+                {isRecurrencePeriod(item.recurrence) && (
+                  <span className="inline-flex rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-200 ring-1 ring-amber-400/20">
+                    {RECURRENCE_BADGE[item.recurrence]}
+                  </span>
+                )}
               </div>
             </div>
-            <div className="stat-num shrink-0 text-sm text-zinc-100">{formatKr(paymentAmount(item))}</div>
+            <div className="stat-num shrink-0 text-sm text-zinc-100"><SensitiveKr value={paymentAmount(item)} /></div>
           </li>
         ))}
       </ul>
@@ -271,9 +279,14 @@ function BillRow({
           <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ${tagClass}`}>
             {CATEGORY_LABELS[bill.category]}
           </span>
+          {isRecurrencePeriod(bill.recurrence) && (
+            <span className="ml-1 inline-flex rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-200 ring-1 ring-amber-400/20">
+              {RECURRENCE_BADGE[bill.recurrence]}
+            </span>
+          )}
         </div>
         <div className={`stat-num shrink-0 text-base ${paid ? 'text-zinc-400 line-through' : 'text-zinc-50'}`}>
-          {formatKr(paymentAmount(bill))}
+          <SensitiveKr value={paymentAmount(bill)} />
         </div>
       </button>
     </li>

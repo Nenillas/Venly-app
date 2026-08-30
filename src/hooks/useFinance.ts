@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Category, Entry, MonthMeta, SAVINGS_BUCKETS, SAVINGS_TARGETS, canonicalItemName, isCarryInIncome, isLegacyInvestmentTitle } from '@/lib/types';
+import { Category, Entry, MonthMeta, SAVINGS_TARGETS, canonicalItemName, isCarryInIncome, isLegacyInvestmentTitle, parseRecurrence } from '@/lib/types';
 import { currentMonth } from '@/lib/format';
-import { readAutogiroMap, readPaidMap, readPaymentTypeMap, writePaid, writePaymentType } from '@/lib/paidStorage';
+import { withMonthLock } from '@/lib/monthRollover';
+import { populateEmptyMonth, copyMonthItems, type PopulateResult } from '@/lib/populateMonth';
+import { readAutogiroMap, readPaidMap, readPaymentTypeMap, readRecurrenceMap, writePaid, writePaymentType, writeRecurrence } from '@/lib/paidStorage';
 import {
   ENTRIES_TABLE,
   MONTHS_TABLE,
@@ -32,6 +34,7 @@ export function useFinance(userId: string | undefined, sessionReady: boolean) {
   const [months, setMonths] = useState<MonthMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rolloverBusy, setRolloverBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!sessionReady || !userId) {
@@ -144,6 +147,44 @@ export function useFinance(userId: string | undefined, sessionReady: boolean) {
     [months, userId],
   );
 
+  const applyPopulateResult = useCallback((result: PopulateResult) => {
+    if (result.inserted.length > 0) {
+      setEntries((prev) => {
+        const ids = new Set(prev.map((e) => e.id));
+        const extra = result.inserted.filter((e) => !ids.has(e.id));
+        return extra.length ? [...prev, ...extra] : prev;
+      });
+    }
+    if (result.meta && isUuid(result.meta.id)) {
+      const meta = result.meta;
+      setMonths((prev) => {
+        const withoutPlaceholder = prev.filter((m) => !(m.month === meta.month && !isUuid(m.id)));
+        if (withoutPlaceholder.some((m) => m.id === meta.id)) {
+          return withoutPlaceholder.map((m) => (m.id === meta.id ? { ...m, ...meta } : m));
+        }
+        return [...withoutPlaceholder, meta];
+      });
+    }
+  }, []);
+
+  const ensureMonthBudget = useCallback(
+    async (month: string) => {
+      const uid = asUuidOrNull(userId);
+      if (!uid) return;
+      setRolloverBusy(true);
+      try {
+        const result = await populateEmptyMonth(uid, month);
+        applyPopulateResult(result);
+      } catch (err) {
+        logSupabaseError(err, 'ensureMonthBudget');
+        setError(supabaseErrorMessage(err, 'Kunde inte skapa nästa månads budget.'));
+      } finally {
+        setRolloverBusy(false);
+      }
+    },
+    [userId, applyPopulateResult],
+  );
+
   const addEntry = useCallback(
     async (month: string, category: Category, name: string, amount: number) => {
       const uid = asUuidOrNull(userId);
@@ -163,6 +204,8 @@ export function useFinance(userId: string | undefined, sessionReady: boolean) {
         amount,
         paid: false,
         payment_type: isCost ? 'invoice' : 'invoice',
+        recurrence: 'none',
+        recurrence_anchor: null,
       };
       setEntries((prev) => [...prev, optimistic]);
 
@@ -227,7 +270,7 @@ export function useFinance(userId: string | undefined, sessionReady: boolean) {
   );
 
   const updateEntry = useCallback(
-    async (id: string, patch: Partial<Pick<Entry, 'name' | 'amount' | 'paid' | 'payment_type'>>) => {
+    async (id: string, patch: Partial<Pick<Entry, 'name' | 'amount' | 'paid' | 'payment_type' | 'recurrence' | 'recurrence_anchor'>>) => {
       const uid = asUuidOrNull(userId);
       if (!uid) return;
       let nextPatch = patch;
@@ -240,16 +283,27 @@ export function useFinance(userId: string | undefined, sessionReady: boolean) {
         return prev.map((e) => (e.id === id ? { ...e, ...nextPatch } : e));
       });
       if (nextPatch.payment_type) writePaymentType(uid, id, nextPatch.payment_type);
+      if (nextPatch.recurrence !== undefined) {
+        writeRecurrence(uid, id, {
+          recurrence: nextPatch.recurrence,
+          recurrence_anchor: nextPatch.recurrence_anchor ?? null,
+        });
+      }
       const rowId = asUuidOrNull(id);
       if (!rowId) return;
+      const payload: Record<string, unknown> = { ...nextPatch };
+      if (nextPatch.recurrence === 'none') {
+        payload.recurrence = 'none';
+        payload.recurrence_anchor = null;
+      }
       const { error: updErr } = await itemsQuery()
-        .update(omitInvalidUuids({ ...nextPatch }))
+        .update(omitInvalidUuids(payload))
         .eq('id', rowId)
         .eq('user_id', uid);
       if (updErr) {
         logSupabaseError(updErr, 'public.budget_items.update');
         console.error('[PGRST] public.budget_items.update', updErr.message, updErr);
-        if (!/payment_type|is_autogiro|schema cache|column/i.test(updErr.message)) {
+        if (!/payment_type|is_autogiro|recurrence|schema cache|column/i.test(updErr.message)) {
           setError(supabaseErrorMessage(updErr, 'Kunde inte spara ändringen.'));
         }
       }
@@ -316,92 +370,16 @@ export function useFinance(userId: string | undefined, sessionReady: boolean) {
     async (fromMonth: string, toMonth: string) => {
       const uid = asUuidOrNull(userId);
       if (!uid) return;
-      const source = entries.filter((e) => e.month === fromMonth);
-      if (source.length === 0) return;
-      const dest = await ensureMeta(toMonth);
-      const toRecordId = asUuidOrNull(dest.id) ?? monthRecordId(toMonth);
-      const payload = source.map(({ category, name, amount }) =>
-        entryWritePayload({
-          userId: uid,
-          month: toMonth,
-          category,
-          name,
-          amount,
-          monthlyRecordId: toRecordId,
-        }),
-      );
-      let { data, error: insErr } = await itemsQuery()
-        .insert(payload)
-        .select();
-      if (insErr && /monthly_record_id|schema cache|column/i.test(insErr.message)) {
-        const retry = await itemsQuery()
-          .insert(source.map(({ category, name, amount }) =>
-            entryWritePayload({ userId: uid, month: toMonth, category, name, amount }),
-          ))
-          .select();
-        data = retry.data;
-        insErr = retry.error;
-      }
-      if (insErr || !data) {
-        console.error('[PGRST] public.budget_items.copy', insErr?.message, insErr);
-        logSupabaseError(insErr, 'public.budget_items.copy');
-        setError(supabaseErrorMessage(insErr, 'Kunde inte kopiera föregående månad.'));
-        throw new Error('copy');
-      }
-      data.forEach((row, i) => {
-        const type = source[i]?.payment_type;
-        const rowId = asUuidOrNull(row.id);
-        if (type && type !== 'invoice' && rowId) writePaymentType(uid, rowId, type);
-      });
-      setEntries((prev) => [...prev, ...data.map((row) => normalizeEntry(row as Record<string, unknown>, uid))]);
-      await Promise.all(data.map(async (row, i) => {
-        const type = source[i]?.payment_type;
-        const rowId = asUuidOrNull(row.id);
-        if (!type || type === 'invoice' || !rowId) return;
-        const { error: typeErr } = await itemsQuery()
-          .update({ payment_type: type })
-          .eq('id', rowId)
-          .eq('user_id', uid);
-        if (typeErr) {
-          console.error('[PGRST] public.budget_items.copy.payment_type', typeErr.message, typeErr);
-          logSupabaseError(typeErr, 'public.budget_items.copy.payment_type');
-        }
-      }));
-
-      const sourceMeta = months.find((m) => m.month === fromMonth);
-      if (sourceMeta) {
-        const destId = asUuidOrNull(dest.id);
-        if (!destId) return;
-        const { error: metaErr } = await monthsQuery()
-          .update(omitInvalidUuids({
-            alloc_buffer: sourceMeta.alloc_buffer,
-            alloc_avanza: sourceMeta.alloc_avanza,
-            alloc_travel: sourceMeta.alloc_travel,
-            carried_over_balance: sourceMeta.carried_over_balance,
-          }))
-          .eq('id', destId)
-          .eq('user_id', uid);
-        if (metaErr) {
-          console.error('[PGRST] public.monthly_records.copy', metaErr.message, metaErr);
-          logSupabaseError(metaErr, 'public.monthly_records.copy');
-          setError(supabaseErrorMessage(metaErr, 'Kunde inte kopiera månadsinställningen.'));
-        }
-        setMonths((prev) =>
-          prev.map((m) =>
-            m.month === toMonth
-              ? {
-                  ...m,
-                  alloc_buffer: sourceMeta.alloc_buffer,
-                  alloc_avanza: sourceMeta.alloc_avanza,
-                  alloc_travel: sourceMeta.alloc_travel,
-                  carried_over_balance: sourceMeta.carried_over_balance,
-                }
-              : m,
-          ),
-        );
+      try {
+        const result = await withMonthLock(`${uid}:${toMonth}`, () => copyMonthItems(uid, fromMonth, toMonth));
+        applyPopulateResult(result);
+      } catch (err) {
+        logSupabaseError(err, 'copyMonth');
+        setError(supabaseErrorMessage(err, 'Kunde inte kopiera föregående månad.'));
+        throw err;
       }
     },
-    [entries, months, ensureMeta, userId, monthRecordId],
+    [userId, applyPopulateResult],
   );
 
   const updateMeta = useCallback(
@@ -446,6 +424,7 @@ export function useFinance(userId: string | undefined, sessionReady: boolean) {
     months,
     loading,
     error,
+    rolloverBusy,
     reload: load,
     getMeta,
     ensureMeta,
@@ -455,6 +434,7 @@ export function useFinance(userId: string | undefined, sessionReady: boolean) {
     copyMonth,
     updateMeta,
     togglePaid,
+    ensureMonthBudget,
   };
 }
 
@@ -465,73 +445,7 @@ async function ensureStarterBudget(userId: string) {
     return;
   }
   try {
-  const month = currentMonth();
-  const { data: existingMonth, error: monthErr } = await monthsQuery()
-    .select('id')
-    .eq('user_id', uid)
-    .eq('month', month)
-    .maybeSingle();
-
-  if (monthErr) {
-    console.error('[PGRST] public.monthly_records.starter.select', monthErr.message, monthErr);
-    logSupabaseError(monthErr, 'public.monthly_records.starter.select');
-    return;
-  }
-
-  let monthId = asUuidOrNull(existingMonth?.id);
-  if (!existingMonth) {
-    const { data: inserted, error: insMonthErr } = await monthsQuery()
-      .insert(monthWritePayload({ userId: uid, month, ...DEFAULT_META }))
-      .select('id')
-      .maybeSingle();
-    if (insMonthErr) {
-      console.error('[PGRST] public.monthly_records.starter.insert', insMonthErr.message, insMonthErr);
-      logSupabaseError(insMonthErr, 'public.monthly_records.starter.insert');
-    }
-    monthId = asUuidOrNull(inserted?.id);
-  }
-
-  const { count, error: countErr } = await itemsQuery()
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', uid)
-    .eq('month', month);
-
-  if (countErr) {
-    console.error('[PGRST] public.budget_items.starter.count', countErr.message, countErr);
-    logSupabaseError(countErr, 'public.budget_items.starter.count');
-    return;
-  }
-  if ((count ?? 0) > 0) return;
-
-  const rows = SAVINGS_BUCKETS.map((b) =>
-    entryWritePayload({
-      userId: uid,
-      month,
-      category: 'savings',
-      name: b.name,
-      amount: 0,
-      monthlyRecordId: monthId,
-    }),
-  );
-  let { error: insEntriesErr } = await itemsQuery().insert(rows);
-  if (insEntriesErr && /monthly_record_id|schema cache|column/i.test(insEntriesErr.message)) {
-    const retry = await itemsQuery().insert(
-      SAVINGS_BUCKETS.map((b) =>
-        entryWritePayload({
-          userId: uid,
-          month,
-          category: 'savings',
-          name: b.name,
-          amount: 0,
-        }),
-      ),
-    );
-    insEntriesErr = retry.error;
-  }
-  if (insEntriesErr) {
-    console.error('[PGRST] public.budget_items.starter.insert', insEntriesErr.message, insEntriesErr);
-    logSupabaseError(insEntriesErr, 'public.budget_items.starter.insert');
-  }
+    await populateEmptyMonth(uid, currentMonth());
   } catch (err) {
     logSupabaseError(err, 'ensureStarterBudget');
   }
@@ -542,22 +456,22 @@ function normalizeEntry(row: Record<string, unknown>, userId: string): Entry {
   const id = mapped.id;
   const local = readPaymentTypeMap(userId)[id];
   const paidLocal = readPaidMap(userId);
-  if (local === 'autogiro' || local === 'card_pot' || local === 'invoice') {
-    return {
-      ...mapped,
-      paid: mapped.paid || Boolean(paidLocal[id]),
-      payment_type: local,
-    };
-  }
-  if (Boolean(readAutogiroMap(userId)[id])) {
-    return {
-      ...mapped,
-      paid: mapped.paid || Boolean(paidLocal[id]),
-      payment_type: 'autogiro',
-    };
-  }
-  return {
+  const recLocal = readRecurrenceMap(userId)[id];
+  let next: Entry = {
     ...mapped,
     paid: mapped.paid || Boolean(paidLocal[id]),
   };
+  if (local === 'autogiro' || local === 'card_pot' || local === 'invoice') {
+    next = { ...next, payment_type: local };
+  } else if (Boolean(readAutogiroMap(userId)[id])) {
+    next = { ...next, payment_type: 'autogiro' };
+  }
+  if (recLocal?.recurrence) {
+    next = {
+      ...next,
+      recurrence: parseRecurrence(recLocal.recurrence),
+      recurrence_anchor: recLocal.recurrence_anchor,
+    };
+  }
+  return next;
 }

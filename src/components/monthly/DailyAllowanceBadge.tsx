@@ -1,6 +1,6 @@
 import { CalendarDays } from 'lucide-react';
-import { formatNumber } from '@/lib/format';
 import { swedishDayOrdinal } from '@/lib/payday';
+import { SensitiveKr } from '@/components/SensitiveKr';
 
 interface Props {
   dailyAmount: number;
@@ -18,7 +18,7 @@ export default function DailyAllowanceBadge({ dailyAmount, remainingDays, payday
       <div className="min-w-0">
         <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-300">Kvar per dag</div>
         <div className="stat-num text-base font-bold text-zinc-100 sm:text-lg">
-          {formatNumber(dailyAmount)} kr / dag
+          <SensitiveKr value={dailyAmount} numberOnly suffix=" / dag" />
         </div>
         <p className="mt-0.5 text-xs leading-relaxed text-zinc-400">
           ({remainingDays} {dayWord} till lön den {swedishDayOrdinal(paydayDay)})
