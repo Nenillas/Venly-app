@@ -107,6 +107,21 @@ export const SAVINGS_TARGETS = {
   travel: 'Resekonto',
 } as const;
 
+export const SAVINGS_BUCKET_HELP = [
+  {
+    title: 'Resekonto',
+    text: 'Öronmärkta medel för framtida täckning av resor och semester.',
+  },
+  {
+    title: 'Buffert',
+    text: 'Rekommenderad storlek är ca 1–3 månadslöner för oförutsedda utgifter och trygghet.',
+  },
+  {
+    title: 'Investeringar / Långsiktigt',
+    text: 'Låt kapitalet arbeta över tid (t.ex. fonder/aktier) för långsiktig tillväxt.',
+  },
+] as const;
+
 /** Broker titles from earlier default templates — shown and stored as Investeringar. */
 export const LEGACY_INVESTMENT_TITLE = /^(avanza\/nordnet|avanza|nordnet)$/i;
 

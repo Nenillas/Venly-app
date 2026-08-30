@@ -5,7 +5,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { Category, Entry, MonthMeta, isCarryInIncome, CARRY_IN_INCOME_NAME, resolveSavingsTargets } from '@/lib/types';
-import { amountToBoostSavings, deficitSavingsCuts, splitProportionally, totalsFor } from '@/lib/calculations';
+import { amountToBoostSavings, deficitSavingsCuts, totalsFor } from '@/lib/calculations';
 import { dailyAllowance, DEFAULT_PAYDAY_DATE, nextPaydayDate, remainingDaysUntilPayday, remainingDisposableAmount, type PaydayDate } from '@/lib/payday';
 import { monthLabel, addMonths } from '@/lib/format';
 import { entryAmountForMonth } from '@/lib/recurrence';
@@ -13,7 +13,7 @@ import { SensitiveKr, sensitiveKrText } from '@/components/SensitiveKr';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import { dockSurplusSection, readDockedUntil } from '@/lib/surplusPlacement';
 import EntryList from './EntryList';
-import SurplusModal, { type SurplusAllocation } from './SurplusModal';
+import SurplusModal, { type SurplusAllocation, type SurplusModalVariant } from './SurplusModal';
 import PayrollSurplusSection from './PayrollSurplusSection';
 import DailyAllowanceBadge from './DailyAllowanceBadge';
 
@@ -38,6 +38,7 @@ export default function MonthlyView({
 }: Props) {
   const { isPrivacyModeEnabled } = usePrivacyMode();
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalKind, setModalKind] = useState<SurplusModalVariant>('payroll');
   const [modalSurplus, setModalSurplus] = useState(0);
   const [copying, setCopying] = useState(false);
   const monthEntries = useMemo(
@@ -79,18 +80,29 @@ export default function MonthlyView({
   const showApplied = surplusNotice === 'applied' || surplusNotice === 'cut';
   const showCopyPrompt = !rolloverBusy && monthEntries.length === 0 && previousMonthWithData !== null;
 
-  const distributeExcessSurplus = async () => {
-    if (savingsRows.length === 0 || boostAmount <= 0) return;
-    const amount = boostAmount;
-    const parts = splitProportionally(amount, savingsRows.map((row) => row.amount));
-    for (let i = 0; i < savingsRows.length; i++) {
-      const addition = parts[i];
-      if (addition > 0) {
-        await onUpdate(savingsRows[i].id, { amount: savingsRows[i].amount + addition });
+  const applyBoostSurplus = async (allocations: SurplusAllocation[]) => {
+    const savings = monthEntries
+      .filter((e) => e.category === 'savings')
+      .map((e) => ({ ...e }));
+
+    for (const item of allocations) {
+      if (item.amount <= 0) continue;
+      const existing =
+        (item.id && savings.find((e) => e.id === item.id)) ||
+        savings.find((e) => e.name.trim().toLowerCase() === item.name.trim().toLowerCase());
+      if (existing) {
+        const next = Number(existing.amount) + item.amount;
+        existing.amount = next;
+        await onUpdate(existing.id, { amount: next });
+      } else {
+        await onAdd(month, 'savings', item.name, item.amount);
       }
     }
-    setAppliedAmount(amount);
-    setAppliedLabels(savingsRows.map((r) => r.name.trim()).filter(Boolean).join(', '));
+    const allocated = allocations.reduce((a, x) => a + Math.max(0, x.amount), 0);
+    setAppliedAmount(allocated);
+    setAppliedLabels(
+      allocations.filter((a) => a.amount > 0).map((a) => a.name.trim()).filter(Boolean).join(', '),
+    );
     setSurplusNotice('applied');
   };
 
@@ -150,8 +162,11 @@ export default function MonthlyView({
     setDockedUntil(dockSurplusSection());
   };
 
-  const openSurplusModal = () => {
-    const v = Math.max(0, Math.round(Number(meta.ending_balance) || 0));
+  const openSurplusModal = (kind: SurplusModalVariant = 'payroll') => {
+    const v = kind === 'boost'
+      ? boostAmount
+      : Math.max(0, Math.round(Number(meta.ending_balance) || 0));
+    setModalKind(kind);
     setModalSurplus(v);
     setModalOpen(true);
   };
@@ -300,7 +315,8 @@ export default function MonthlyView({
                   </p>
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                     <button
-                      onClick={distributeExcessSurplus}
+                      type="button"
+                      onClick={() => openSurplusModal('boost')}
                       className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-300/90 px-4 py-2 text-sm font-semibold text-sky-950 transition-all duration-200 hover:bg-sky-200 sm:w-auto"
                     >
                       <PiggyBank className="h-4 w-4" /> Fördela {sensitiveKrText(boostAmount, isPrivacyModeEnabled)}
@@ -363,13 +379,16 @@ export default function MonthlyView({
 
       {modalOpen && (
         <SurplusModal
+          variant={modalKind}
           meta={meta}
           totals={totals}
           surplus={modalSurplus}
           savingsRows={savingsRows}
           onClose={() => setModalOpen(false)}
           onSaveRules={(patch) => onUpdateMeta(month, patch)}
-          onApply={applySurplus}
+          onApply={(allocations, leftover) =>
+            modalKind === 'boost' ? applyBoostSurplus(allocations) : applySurplus(allocations, leftover)
+          }
         />
       )}
     </div>

@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { CalendarClock, Plus, Trash2, Check, Repeat, CreditCard, ChevronDown, FileText, HelpCircle, X } from 'lucide-react';
-import { Category, CATEGORY_LABELS, Entry, isCarryInIncome, CARRY_IN_INCOME_HELP, CARRY_IN_INCOME_NAME, canonicalItemName, isExpense, isRecurrencePeriod, PAYMENT_TYPE_LABELS, PAYMENT_TYPES, PaymentMenuValue, PaymentType, RECURRENCE_BADGE, RECURRENCE_LABELS, RECURRENCE_PERIODS, RecurrencePeriod } from '@/lib/types';
+import { CalendarClock, Plus, Trash2, Check, Repeat, CreditCard, ChevronDown, FileText, X } from 'lucide-react';
+import { Category, CATEGORY_LABELS, Entry, isCarryInIncome, CARRY_IN_INCOME_HELP, CARRY_IN_INCOME_NAME, canonicalItemName, isExpense, isRecurrencePeriod, PAYMENT_TYPE_LABELS, PAYMENT_TYPES, PaymentMenuValue, PaymentType, RECURRENCE_BADGE, RECURRENCE_LABELS, RECURRENCE_PERIODS, RecurrencePeriod, SAVINGS_BUCKET_HELP } from '@/lib/types';
+import InfoTip from '@/components/InfoTip';
 import { isRecurrenceDue } from '@/lib/recurrence';
 import { SensitiveKr } from '@/components/SensitiveKr';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
@@ -67,7 +68,22 @@ export default function EntryList({
             {icon}
           </span>
           <div className="min-w-0">
-            <h3 className="font-display text-base font-semibold text-zinc-50">{title}</h3>
+            <h3 className="flex items-center gap-1.5 font-display text-base font-semibold text-zinc-50">
+              <span>{title}</span>
+              {category === 'savings' && (
+                <InfoTip label="Vad är målinriktat sparande?" className="w-80">
+                  <p className="mb-2 font-medium text-zinc-50">Så kan du tänka kring dina sparanderader:</p>
+                  <ul className="space-y-2">
+                    {SAVINGS_BUCKET_HELP.map((item) => (
+                      <li key={item.title}>
+                        <span className="font-semibold text-teal-200">{item.title}:</span>{' '}
+                        {item.text}
+                      </li>
+                    ))}
+                  </ul>
+                </InfoTip>
+              )}
+            </h3>
             <p className="text-xs text-zinc-300">{hint}</p>
           </div>
         </div>
@@ -182,7 +198,9 @@ function Row({
       {carryIn ? (
         <div className="relative z-[1] flex min-w-0 flex-1 items-center gap-1 px-2 py-1">
           <span className="truncate text-sm text-zinc-50">{CARRY_IN_INCOME_NAME}</span>
-          <CarryInHelp />
+          <InfoTip label="Vad är ingående balans?" className="w-64">
+            {CARRY_IN_INCOME_HELP}
+          </InfoTip>
         </div>
       ) : (
       <input
@@ -321,74 +339,6 @@ function DeleteConfirmDialog({
       </div>
     </div>,
     document.body,
-  );
-}
-
-function CarryInHelp() {
-  const [open, setOpen] = useState(false);
-  const btn = useRef<HTMLButtonElement>(null);
-  const tip = useRef<HTMLSpanElement>(null);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-
-  useLayoutEffect(() => {
-    if (!open || !btn.current) return;
-    const place = () => {
-      const r = btn.current!.getBoundingClientRect();
-      const width = 256;
-      const left = Math.min(r.left, window.innerWidth - width - 12);
-      setPos({ top: r.bottom + 6, left: Math.max(12, left) });
-    };
-    place();
-    window.addEventListener('scroll', place, true);
-    window.addEventListener('resize', place);
-    return () => {
-      window.removeEventListener('scroll', place, true);
-      window.removeEventListener('resize', place);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (btn.current?.contains(t) || tip.current?.contains(t)) return;
-      setOpen(false);
-    };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, [open]);
-
-  return (
-    <span className="relative inline-flex shrink-0">
-      <button
-        ref={btn}
-        type="button"
-        aria-label="Vad är ingående balans?"
-        aria-expanded={open}
-        onMouseEnter={() => setOpen(true)}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setOpen((v) => !v);
-        }}
-        className="grid h-5 w-5 place-items-center rounded-full text-zinc-400 transition hover:bg-white/10 hover:text-teal-200"
-      >
-        <HelpCircle className="h-3.5 w-3.5" />
-      </button>
-      {open &&
-        createPortal(
-          <span
-            ref={tip}
-            role="tooltip"
-            onMouseLeave={() => setOpen(false)}
-            style={{ top: pos.top, left: pos.left }}
-            className="fixed z-50 w-64 rounded-xl border border-white/10 bg-ink-850 p-3 text-left text-xs leading-relaxed text-zinc-200 shadow-xl shadow-black/40"
-          >
-            {CARRY_IN_INCOME_HELP}
-          </span>,
-          document.body,
-        )}
-    </span>
   );
 }
 
