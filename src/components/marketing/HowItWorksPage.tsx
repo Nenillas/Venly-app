@@ -15,7 +15,7 @@ export default function HowItWorksPage({ loggedIn }: { loggedIn: boolean }) {
   const cta = loggedIn ? APP_PATH : SIGNUP_PATH;
 
   return (
-    <MarketingLayout route="how" loggedIn={loggedIn} showNav>
+    <MarketingLayout route="how" loggedIn={loggedIn}>
       <section className="hero">
         <HeroOrbs />
         <div className="wrap">

@@ -15,7 +15,7 @@ export default function GuidePage({ loggedIn }: { loggedIn: boolean }) {
   const cta = loggedIn ? APP_PATH : SIGNUP_PATH;
 
   return (
-    <MarketingLayout route="guide" loggedIn={loggedIn} showNav variant="mk-guide">
+    <MarketingLayout route="guide" loggedIn={loggedIn} variant="mk-guide">
       <section className="hero">
         <HeroOrbs />
         <div className="wrap">

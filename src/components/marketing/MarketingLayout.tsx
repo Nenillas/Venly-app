@@ -9,13 +9,11 @@ const LOGO = '/venly-logo.svg';
 export default function MarketingLayout({
   route,
   loggedIn,
-  showNav,
   variant = '',
   children,
 }: {
   route: MarketingRoute;
   loggedIn: boolean;
-  showNav?: boolean;
   variant?: string;
   children: ReactNode;
 }) {
@@ -32,15 +30,11 @@ export default function MarketingLayout({
             <span className="brand-name">Venly</span>
             <span className="beta-badge">BETA</span>
           </MkLink>
-          {showNav && (
-            <nav className="header-nav" aria-label="Primär">
-              <MkLink href={HOW_PATH} ariaCurrent={route === 'how' ? 'page' : undefined}>Så funkar det</MkLink>
-              <MkLink href={PRICE_PATH} ariaCurrent={route === 'price' ? 'page' : undefined}>Beta</MkLink>
-              {route === 'guide' && (
-                <MkLink href={GUIDE_PATH} ariaCurrent="page">Guide</MkLink>
-              )}
-            </nav>
-          )}
+          <nav className="header-nav" aria-label="Primär">
+            <MkLink href={HOW_PATH} ariaCurrent={route === 'how' ? 'page' : undefined}>Så funkar det</MkLink>
+            <MkLink href={GUIDE_PATH} ariaCurrent={route === 'guide' ? 'page' : undefined}>Guide</MkLink>
+            <MkLink href={PRICE_PATH} ariaCurrent={route === 'price' ? 'page' : undefined}>Beta</MkLink>
+          </nav>
           <div className="header-actions">
             {!loggedIn && (
               <MkLink className="btn btn-ghost btn-sm" href={loginHref}>Logga in</MkLink>
@@ -58,13 +52,12 @@ export default function MarketingLayout({
             <img src={LOGO} alt="" width={20} height={20} />
             <span>Venly</span>
           </MkLink>
-          {showNav && (
-            <nav className="footer-links" aria-label="Sidfot">
-              {route !== 'how' && <MkLink href={HOW_PATH}>Så funkar det</MkLink>}
-              <MkLink href={PRICE_PATH}>Beta</MkLink>
-              <MkLink href={HOME_PATH}>Startsida</MkLink>
-            </nav>
-          )}
+          <nav className="footer-links" aria-label="Sidfot">
+            <MkLink href={HOW_PATH} ariaCurrent={route === 'how' ? 'page' : undefined}>Så funkar det</MkLink>
+            <MkLink href={GUIDE_PATH} ariaCurrent={route === 'guide' ? 'page' : undefined}>Guide</MkLink>
+            <MkLink href={PRICE_PATH} ariaCurrent={route === 'price' ? 'page' : undefined}>Beta</MkLink>
+            <MkLink href={HOME_PATH} ariaCurrent={route === 'home' ? 'page' : undefined}>Startsida</MkLink>
+          </nav>
           <span className="footer-mark">Equilibrium</span>
         </div>
       </footer>

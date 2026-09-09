@@ -66,10 +66,12 @@
 
     .mk .header-inner {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      height: 68px;
-      gap: 16px;
+      min-height: 68px;
+      padding-block: 10px;
+      gap: 8px 16px;
     }
 
     .mk .brand {
@@ -805,15 +807,16 @@
     .mk .brand { flex-shrink: 0; }
 
     .mk .header-nav {
-      display: none;
+      display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 28px;
+      gap: 12px 20px;
       margin-left: auto;
-      margin-right: 20px;
+      margin-right: 16px;
     }
 
     @media (min-width: 768px) {
-      .mk .header-nav { display: flex; }
+      .mk .header-nav { gap: 28px; margin-right: 20px; }
     }
 
     .mk .header-nav a {
