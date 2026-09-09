@@ -183,7 +183,7 @@ function FinanceApp({
                 </h1>
                 <BetaBadge />
               </div>
-              <p className="mt-0.5 hidden truncate text-xs text-zinc-300 sm:block">Gratis under beta · Ingen bankkoppling</p>
+              <p className="mt-0.5 hidden truncate text-xs text-zinc-300 sm:block">Smartare kontroll över din ekonomi.</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -288,7 +288,7 @@ function FinanceApp({
 
       <footer className="page-shell flex flex-wrap items-center justify-center gap-x-3 gap-y-2 pb-8 pt-4 text-center text-xs text-zinc-300">
         <Logo size={28} className="opacity-90" />
-        <span>Venly · Gratis under beta · Ingen bankkoppling</span>
+        <span>Venly · Smartare kontroll över din ekonomi.</span>
         <button
           type="button"
           onClick={() => setFeedbackOpen(true)}

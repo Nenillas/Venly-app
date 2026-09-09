@@ -6,7 +6,7 @@ export const HOW_PATH = '/sa-funkar-det';
 export const PRICE_PATH = '/pris';
 export const GUIDE_PATH = '/guider/gora-manadsbudget';
 
-export const PRICE_LINE = 'Gratis under beta · Ingen bankkoppling';
+export const PRICE_LINE = 'Smartare kontroll över din ekonomi.';
 
 export type MarketingRoute = 'home' | 'how' | 'price' | 'guide';
 

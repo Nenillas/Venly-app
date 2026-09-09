@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactNode } from 'react';
-import { navigate } from '@/lib/sitePath';
+import { navigate, PRICE_LINE } from '@/lib/sitePath';
 
 export default function MkLink({
   href,
@@ -27,7 +27,7 @@ export default function MkLink({
 }
 
 export function PriceLine() {
-  return <p className="price-line">Gratis under beta · Ingen bankkoppling</p>;
+  return <p className="price-line">{PRICE_LINE}</p>;
 }
 
 export function HeroOrbs() {

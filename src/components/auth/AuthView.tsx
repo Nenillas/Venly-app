@@ -143,7 +143,7 @@ export default function AuthView() {
             </h1>
             <BetaBadge />
           </div>
-          <p className="mt-1 text-sm text-zinc-300">Gratis under beta · Ingen bankkoppling</p>
+          <p className="mt-1 text-sm text-zinc-300">Smartare kontroll över din ekonomi.</p>
         </div>
       </div>
 
