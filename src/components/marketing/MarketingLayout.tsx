@@ -1,0 +1,73 @@
+import type { ReactNode } from 'react';
+import './marketing.css';
+import MkLink from './MkLink';
+import { APP_PATH, GUIDE_PATH, HOME_PATH, HOW_PATH, LOGIN_PATH, PRICE_PATH, SIGNUP_PATH } from '@/lib/sitePath';
+import type { MarketingRoute } from '@/lib/sitePath';
+
+const LOGO = '/venly-logo.svg';
+
+export default function MarketingLayout({
+  route,
+  loggedIn,
+  showNav,
+  variant = '',
+  children,
+}: {
+  route: MarketingRoute;
+  loggedIn: boolean;
+  showNav?: boolean;
+  variant?: string;
+  children: ReactNode;
+}) {
+  const startHref = loggedIn ? APP_PATH : SIGNUP_PATH;
+  const startLabel = loggedIn ? 'Öppna appen' : 'Kom igång';
+  const loginHref = loggedIn ? APP_PATH : LOGIN_PATH;
+
+  return (
+    <div className={`mk ${variant}`.trim()}>
+      <header className="site-header">
+        <div className="wrap header-inner">
+          <MkLink className="brand" href={HOME_PATH} ariaLabel="Venly startsida">
+            <img src={LOGO} alt="" width={32} height={32} />
+            <span className="brand-name">Venly</span>
+            <span className="beta-badge">BETA</span>
+          </MkLink>
+          {showNav && (
+            <nav className="header-nav" aria-label="Primär">
+              <MkLink href={HOW_PATH} ariaCurrent={route === 'how' ? 'page' : undefined}>Så funkar det</MkLink>
+              <MkLink href={PRICE_PATH} ariaCurrent={route === 'price' ? 'page' : undefined}>Beta</MkLink>
+              {route === 'guide' && (
+                <MkLink href={GUIDE_PATH} ariaCurrent="page">Guide</MkLink>
+              )}
+            </nav>
+          )}
+          <div className="header-actions">
+            {!loggedIn && (
+              <MkLink className="btn btn-ghost btn-sm" href={loginHref}>Logga in</MkLink>
+            )}
+            <MkLink className="btn btn-primary btn-sm" href={startHref}>{startLabel}</MkLink>
+          </div>
+        </div>
+      </header>
+
+      {children}
+
+      <footer className="site-footer">
+        <div className="wrap footer-inner">
+          <MkLink className="footer-brand" href={HOME_PATH}>
+            <img src={LOGO} alt="" width={20} height={20} />
+            <span>Venly</span>
+          </MkLink>
+          {showNav && (
+            <nav className="footer-links" aria-label="Sidfot">
+              {route !== 'how' && <MkLink href={HOW_PATH}>Så funkar det</MkLink>}
+              <MkLink href={PRICE_PATH}>Beta</MkLink>
+              <MkLink href={HOME_PATH}>Startsida</MkLink>
+            </nav>
+          )}
+          <span className="footer-mark">Equilibrium</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
