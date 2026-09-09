@@ -44,7 +44,7 @@ export default function AuthCallback({ onDone }: { onDone: () => void }) {
         goToResetPassword(session);
         return;
       }
-      window.history.replaceState({}, '', '/');
+      window.history.replaceState({}, '', '/app');
       onDone();
     };
 

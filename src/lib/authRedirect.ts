@@ -93,6 +93,9 @@ export function isAuthCallbackLocation(href = window.location.href): boolean {
   const url = new URL(href);
   if (url.pathname.startsWith('/reset-password')) return false;
   if (url.pathname.startsWith('/login')) return false;
+  if (url.pathname.startsWith('/sa-funkar-det')) return false;
+  if (url.pathname.startsWith('/pris')) return false;
+  if (url.pathname.startsWith('/guider/')) return false;
   if (isRecoveryAuthLocation(href)) return false;
   if (url.pathname.startsWith('/auth/callback')) return true;
   if (url.searchParams.get('code')) return true;

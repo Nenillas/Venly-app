@@ -1,9 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Wallet, LineChart, CheckSquare, Lightbulb, Eye, EyeOff } from 'lucide-react';
+import FeedbackModal, { BetaBadge, FeedbackButton } from '@/components/FeedbackModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useFinance } from '@/hooks/useFinance';
+import { useLocationPath } from '@/hooks/useLocationPath';
 import { currentMonth } from '@/lib/format';
 import { isAuthCallbackLocation, isRecoveryAuthLocation, isResetPasswordLocation } from '@/lib/authRedirect';
+import {
+  APP_PATH,
+  LOGIN_PATH,
+  isAppPath,
+  isLoginPath,
+  marketingRoute,
+  replacePath,
+} from '@/lib/sitePath';
 import MonthlyView from '@/components/monthly/MonthlyView';
 import AnalyticsView from '@/components/analytics/AnalyticsView';
 import InsightView from '@/components/insight/InsightView';
@@ -15,6 +25,11 @@ import UserMenu from '@/components/auth/UserMenu';
 import { usePaydayDate } from '@/hooks/usePaydayDate';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
 import Logo from '@/components/Logo';
+import LandingPage from '@/components/marketing/LandingPage';
+import HowItWorksPage from '@/components/marketing/HowItWorksPage';
+import PricingPage from '@/components/marketing/PricingPage';
+import GuidePage from '@/components/marketing/GuidePage';
+import type { User as AuthUser } from '@supabase/supabase-js';
 
 type Tab = 'monthly' | 'payments' | 'analytics' | 'insight';
 
@@ -26,10 +41,17 @@ const TABS: { id: Tab; label: string; icon: typeof Wallet }[] = [
 ];
 
 function App() {
+  const loc = useLocationPath();
+  const pathname = loc.split('?')[0] || '/';
+  const mk = marketingRoute(pathname);
+  const onApp = isAppPath(pathname);
+  const onLogin = isLoginPath(pathname);
+
   const { user, loading: authLoading, signOut } = useAuth();
   const { paydayDate, setPaydayDate, saving: paydaySaving } = usePaydayDate(user);
   const { isPrivacyModeEnabled, togglePrivacyMode } = usePrivacyMode();
   const [tab, setTab] = useState<Tab>('monthly');
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [month, setMonth] = useState(currentMonth);
   const [handlingCallback, setHandlingCallback] = useState(() => isAuthCallbackLocation());
   const [resetPassword, setResetPassword] = useState(
@@ -40,12 +62,21 @@ function App() {
     setResetPassword(isResetPasswordLocation() || isRecoveryAuthLocation());
   }, []);
   const leaveResetPassword = useCallback(() => setResetPassword(isResetPasswordLocation()), []);
-  const finance = useFinance(user?.id, !authLoading && !handlingCallback && !resetPassword && Boolean(user));
+  const finance = useFinance(
+    user?.id,
+    !authLoading && !handlingCallback && !resetPassword && Boolean(user) && onApp,
+  );
 
   useEffect(() => {
-    if (authLoading || handlingCallback || resetPassword || !user || finance.loading) return;
+    if (authLoading || handlingCallback || resetPassword || !user || !onApp || finance.loading) return;
     void finance.ensureMonthBudget(month);
-  }, [month, finance.loading, finance.ensureMonthBudget, authLoading, handlingCallback, resetPassword, user]);
+  }, [month, finance.loading, finance.ensureMonthBudget, authLoading, handlingCallback, resetPassword, user, onApp]);
+
+  useEffect(() => {
+    if (authLoading || handlingCallback || resetPassword) return;
+    if (user && onLogin) replacePath(APP_PATH);
+    if (!user && onApp) replacePath(LOGIN_PATH);
+  }, [authLoading, handlingCallback, resetPassword, user, onLogin, onApp]);
 
   if (resetPassword) {
     return <ResetPassword onLeave={leaveResetPassword} />;
@@ -55,21 +86,90 @@ function App() {
     return <AuthCallback onDone={finishCallback} />;
   }
 
-  if (authLoading) {
-    return (
-      <div className="grid min-h-screen place-items-center text-zinc-300">
-        <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-teal-300" />
-          <p className="mt-4 text-sm">Kontrollerar inloggning…</p>
-        </div>
-      </div>
-    );
+  if (mk) {
+    const loggedIn = Boolean(user);
+    if (mk === 'how') return <HowItWorksPage loggedIn={loggedIn} />;
+    if (mk === 'price') return <PricingPage loggedIn={loggedIn} />;
+    if (mk === 'guide') return <GuidePage loggedIn={loggedIn} />;
+    return <LandingPage loggedIn={loggedIn} />;
   }
 
-  if (!user) {
+  if (onLogin) {
+    if (authLoading || user) {
+      return <BootScreen label="Kontrollerar inloggning…" />;
+    }
     return <AuthView />;
   }
 
+  if (onApp) {
+    if (authLoading || !user) {
+      return <BootScreen label={authLoading ? 'Kontrollerar inloggning…' : 'Skickar till inloggning…'} />;
+    }
+    return (
+      <FinanceApp
+        user={user}
+        tab={tab}
+        setTab={setTab}
+        month={month}
+        setMonth={setMonth}
+        finance={finance}
+        paydayDate={paydayDate}
+        paydaySaving={paydaySaving}
+        setPaydayDate={setPaydayDate}
+        isPrivacyModeEnabled={isPrivacyModeEnabled}
+        togglePrivacyMode={togglePrivacyMode}
+        feedbackOpen={feedbackOpen}
+        setFeedbackOpen={setFeedbackOpen}
+        signOut={signOut}
+      />
+    );
+  }
+
+  return <LandingPage loggedIn={Boolean(user)} />;
+}
+
+function BootScreen({ label }: { label: string }) {
+  return (
+    <div className="grid min-h-screen place-items-center text-zinc-300">
+      <div className="text-center">
+        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-teal-300" />
+        <p className="mt-4 text-sm">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+function FinanceApp({
+  user,
+  tab,
+  setTab,
+  month,
+  setMonth,
+  finance,
+  paydayDate,
+  paydaySaving,
+  setPaydayDate,
+  isPrivacyModeEnabled,
+  togglePrivacyMode,
+  feedbackOpen,
+  setFeedbackOpen,
+  signOut,
+}: {
+  user: AuthUser;
+  tab: Tab;
+  setTab: (tab: Tab) => void;
+  month: string;
+  setMonth: (month: string) => void;
+  finance: ReturnType<typeof useFinance>;
+  paydayDate: ReturnType<typeof usePaydayDate>['paydayDate'];
+  paydaySaving: boolean;
+  setPaydayDate: ReturnType<typeof usePaydayDate>['setPaydayDate'];
+  isPrivacyModeEnabled: boolean;
+  togglePrivacyMode: () => void;
+  feedbackOpen: boolean;
+  setFeedbackOpen: (open: boolean) => void;
+  signOut: () => void;
+}) {
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden">
       <header className="sticky top-0 z-30 isolate border-b border-white/[0.06] bg-ink-950/80 backdrop-blur-xl">
@@ -77,13 +177,17 @@ function App() {
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <Logo size={40} />
             <div className="min-w-0">
-              <h1 className="font-display text-lg font-bold leading-none text-zinc-50">
-                Ven<span className="text-teal-300">ly</span>
-              </h1>
-              <p className="mt-0.5 hidden truncate text-xs text-zinc-300 sm:block">Smartare kontroll över din ekonomi</p>
+              <div className="flex items-center gap-2">
+                <h1 className="font-display text-lg font-bold leading-none text-zinc-50">
+                  Ven<span className="text-teal-300">ly</span>
+                </h1>
+                <BetaBadge />
+              </div>
+              <p className="mt-0.5 hidden truncate text-xs text-zinc-300 sm:block">Gratis under beta · Ingen bankkoppling</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <FeedbackButton onClick={() => setFeedbackOpen(true)} />
             <div className="relative group/privacy">
               <button
                 type="button"
@@ -182,10 +286,23 @@ function App() {
         )}
       </main>
 
-      <footer className="page-shell flex flex-wrap items-center justify-center gap-2 pb-8 pt-4 text-center text-xs text-zinc-300">
+      <footer className="page-shell flex flex-wrap items-center justify-center gap-x-3 gap-y-2 pb-8 pt-4 text-center text-xs text-zinc-300">
         <Logo size={28} className="opacity-90" />
-        <span>Venly · Smartare kontroll över din ekonomi.</span>
+        <span>Venly · Gratis under beta · Ingen bankkoppling</span>
+        <button
+          type="button"
+          onClick={() => setFeedbackOpen(true)}
+          className="font-medium text-teal-200/90 underline decoration-teal-400/30 underline-offset-2 hover:text-teal-200"
+        >
+          Lämna feedback
+        </button>
       </footer>
+
+      <FeedbackModal
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        userEmail={user.email}
+      />
     </div>
   );
 }

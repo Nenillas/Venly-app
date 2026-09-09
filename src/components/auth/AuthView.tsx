@@ -3,6 +3,9 @@ import { Mail, Lock, Loader2 } from 'lucide-react';
 import { readLoginAuthError, readLoginAuthInfo } from '@/lib/authRedirect';
 import { requestPasswordReset, signInWithMagicLink, signInWithPassword, signUpWithPassword } from '@/lib/supabase/auth';
 import Logo from '@/components/Logo';
+import FeedbackModal, { BetaBadge, FeedbackButton } from '@/components/FeedbackModal';
+import MkLink from '@/components/marketing/MkLink';
+import { HOME_PATH } from '@/lib/sitePath';
 
 type Mode = 'login' | 'signup' | 'forgot';
 
@@ -25,17 +28,25 @@ function rememberEmail(value: string) {
 }
 
 export default function AuthView() {
-  const [mode, setMode] = useState<Mode>('login');
+  const [mode, setMode] = useState<Mode>(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('mode') === 'signup' ? 'signup' : 'login';
+    } catch {
+      return 'login';
+    }
+  });
   const [email, setEmail] = useState(readSavedEmail);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(() => readLoginAuthError());
   const [info, setInfo] = useState<string | null>(() => readLoginAuthInfo());
   const [busy, setBusy] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   useEffect(() => {
     if (!readLoginAuthError() && !readLoginAuthInfo()) return;
-    window.history.replaceState({}, '', '/');
-  }, []);
+    const next = mode === 'signup' ? '/login?mode=signup' : '/login';
+    window.history.replaceState({}, '', next);
+  }, [mode]);
 
   const submitPassword = async (e: FormEvent) => {
     e.preventDefault();
@@ -122,12 +133,17 @@ export default function AuthView() {
   return (
     <div className="flex min-h-screen w-full max-w-full flex-col items-center justify-center overflow-x-hidden px-4 py-10">
       <div className="mb-8 flex items-center gap-3 animate-fade-in">
-        <Logo size={44} />
+        <MkLink href={HOME_PATH} ariaLabel="Venly startsida">
+          <Logo size={44} />
+        </MkLink>
         <div>
-          <h1 className="font-display text-2xl font-bold leading-none text-zinc-50">
-            Ven<span className="text-teal-300">ly</span>
-          </h1>
-          <p className="mt-1 text-sm text-zinc-300">Smartare kontroll över din ekonomi</p>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-2xl font-bold leading-none text-zinc-50">
+              Ven<span className="text-teal-300">ly</span>
+            </h1>
+            <BetaBadge />
+          </div>
+          <p className="mt-1 text-sm text-zinc-300">Gratis under beta · Ingen bankkoppling</p>
         </div>
       </div>
 
@@ -285,6 +301,15 @@ export default function AuthView() {
           </>
         )}
       </section>
+
+      <div className="mt-6 flex flex-col items-center gap-3">
+        <FeedbackButton onClick={() => setFeedbackOpen(true)} />
+        <p className="max-w-md text-center text-xs text-zinc-400">
+          Alla funktioner är öppna under betan — inga betalväggar.
+        </p>
+      </div>
+
+      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </div>
   );
 }
