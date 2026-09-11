@@ -45,7 +45,7 @@ export function generateInsight(payload: InsightPayload): string[] {
   const sentences: string[] = [];
 
   sentences.push(
-    `Hälsobetyget för ${monthLabel(month)} är ${score.total} av 100 (Sparkvot ${score.savingsRate}/40p, Nettomarginal ${score.netMargin}/40p, Saldo före lön ${score.endingBalance}/20p). Kvar på lönekontot vid nästa lön var ${formatKr(prompt.data.carried_over_balance)}.`,
+    `Hälsobetyget för ${monthLabel(month)} är ${score.total} av 100 (Sparkvot ${score.savingsRate}/35p, Fasta ${score.fixedRatio}/35p, Marginal ${score.surplus}/15p, Saldo före lön ${score.endingBalance}/15p). Kvar på lönekontot vid nästa lön var ${formatKr(prompt.data.carried_over_balance)}.`,
   );
 
   if (cur.net >= 0) {

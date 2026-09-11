@@ -4,7 +4,7 @@ interface LogoProps {
   title?: string;
 }
 
-/** Equilibrium mark — two indigo lobes with an emerald point. */
+/** Brand mark — two indigo lobes with an emerald point. */
 export default function Logo({ size = 40, className = '', title = 'Venly' }: LogoProps) {
   return (
     <span

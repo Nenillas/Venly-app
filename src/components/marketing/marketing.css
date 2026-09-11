@@ -798,12 +798,6 @@
       opacity: 0.7;
     }
 
-    .mk .footer-mark {
-      font-size: 13px;
-      color: var(--text-muted);
-      opacity: 0.7;
-    }
-
     .mk .brand { flex-shrink: 0; }
 
     .mk .header-nav {

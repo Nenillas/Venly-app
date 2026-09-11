@@ -122,26 +122,62 @@ export function splitProportionally(total: number, weights: number[]): number[] 
   return parts;
 }
 
-export interface HealthScore {
-  total: number;
-  savingsRate: number;
-  netMargin: number;
-  endingBalance: number;
-  savingsRatePct: number;
-  netMarginPct: number;
-  endingBalanceKr: number;
-}
-
 export const HEALTH_CAPS = {
-  savingsRate: 40,
-  netMargin: 40,
-  endingBalance: 20,
+  savingsRate: 35,
+  fixedRatio: 35,
+  surplus: 15,
+  endingBalance: 15,
 } as const;
 
 export type HealthFactor = keyof typeof HEALTH_CAPS;
 
+export interface HealthScore {
+  total: number;
+  savingsRate: number;
+  fixedRatio: number;
+  surplus: number;
+  endingBalance: number;
+  savingsRatePct: number;
+  fixedRatioPct: number;
+  net: number;
+  endingBalanceKr: number;
+  income: number;
+  /** @deprecated alias of surplus — kept for older call sites */
+  netMargin: number;
+  netMarginPct: number;
+}
+
+export type HealthTierId = 'master' | 'resilient' | 'stable' | 'tight' | 'warning';
+export type HealthTone = 'emerald' | 'sky' | 'amber' | 'orange' | 'rose';
+
+export interface HealthTier {
+  id: HealthTierId;
+  min: number;
+  name: string;
+  tone: HealthTone;
+}
+
+export const HEALTH_TIERS: HealthTier[] = [
+  { id: 'master', min: 90, name: 'Ekonomisk Mästare', tone: 'emerald' },
+  { id: 'resilient', min: 75, name: 'Stresstålig & Trygg', tone: 'sky' },
+  { id: 'stable', min: 55, name: 'Stabil Vardag', tone: 'amber' },
+  { id: 'tight', min: 35, name: 'Sårbar / Tight', tone: 'orange' },
+  { id: 'warning', min: 0, name: 'Varningszon', tone: 'rose' },
+];
+
+export function healthTier(total: number): HealthTier {
+  const n = Math.max(0, Math.min(100, Math.round(Number(total) || 0)));
+  return HEALTH_TIERS.find((t) => n >= t.min) ?? HEALTH_TIERS[HEALTH_TIERS.length - 1];
+}
+
+export function nextHealthTier(total: number): HealthTier | null {
+  const current = healthTier(total);
+  const i = HEALTH_TIERS.findIndex((t) => t.id === current.id);
+  return i > 0 ? HEALTH_TIERS[i - 1] : null;
+}
+
 /**
- * Saldo före lön for health/AI: persisted roll-over after Verkställ,
+ * Saldo före lön for health: persisted roll-over after Verkställ,
  * otherwise the current "Kvar på lönekontot" input.
  */
 export function effectiveCarriedOverBalance(
@@ -152,7 +188,45 @@ export function effectiveCarriedOverBalance(
   return Math.max(0, Number(meta.ending_balance) || 0);
 }
 
-/** Poäng 0–100 enbart från innevarande månads budget och saldo före lön. */
+function savingsRatePoints(pct: number): number {
+  if (pct >= 0.2) return HEALTH_CAPS.savingsRate;
+  if (pct >= 0.1) return 20;
+  if (pct >= 0.05) return 10;
+  return 0;
+}
+
+function fixedRatioPoints(pct: number): number {
+  if (pct <= 0.5) return HEALTH_CAPS.fixedRatio;
+  if (pct <= 0.65) return 20;
+  if (pct <= 0.75) return 10;
+  return 0;
+}
+
+function surplusPoints(net: number): number {
+  if (net > 0) return HEALTH_CAPS.surplus;
+  if (net === 0) return 10;
+  return 0;
+}
+
+function paydayBalancePoints(balance: number, income: number): number {
+  if (income > 0 && balance > income * 0.1) return HEALTH_CAPS.endingBalance;
+  if (balance > 0) return 8;
+  return 0;
+}
+
+/** Planned leftover after fixed costs and savings — daily-allowance pool. */
+export function plannedPaydayMargin(totals: MonthTotals): number {
+  return Math.max(0, Math.round(totals.income - totals.fixed - totals.savings));
+}
+
+/** Saldo före lön if filled, otherwise planned cash left until payday. */
+export function projectedPaydayBalance(endingBalance: number, totals: MonthTotals): number {
+  const saldo = Math.max(0, Math.round(Number(endingBalance) || 0));
+  if (saldo > 0) return saldo;
+  return plannedPaydayMargin(totals);
+}
+
+/** Poäng 0–100 från månadens kassaflöde och saldo före lön. */
 export function healthScore(
   entries: Entry[],
   endingBalance: number,
@@ -161,57 +235,109 @@ export function healthScore(
   const t = totalsFor(entries, mode);
   const income = t.income;
   const savingsRatePct = income > 0 ? t.savings / income : 0;
+  const fixedRatioPct = income > 0 ? t.fixed / income : 1;
+  const net = Math.round(t.net);
+  const endingBalanceKr = projectedPaydayBalance(endingBalance, t);
   const netMarginPct = income > 0 ? (income - t.expenses) / income : 0;
-  const endingBalanceKr = Number(endingBalance) || 0;
 
-  const savingsPts = scaledPoints(savingsRatePct, 0.2, HEALTH_CAPS.savingsRate);
-  const marginPts = scaledPoints(netMarginPct, 0.15, HEALTH_CAPS.netMargin);
-  const balancePts = endingBalanceKr > 0 ? HEALTH_CAPS.endingBalance : 0;
+  const savingsPts = income > 0 ? savingsRatePoints(savingsRatePct) : 0;
+  const fixedPts = income > 0 ? fixedRatioPoints(fixedRatioPct) : 0;
+  const surplusPts = income > 0 ? surplusPoints(net) : 0;
+  const balancePts = income > 0 ? paydayBalancePoints(endingBalanceKr, income) : 0;
 
   return {
-    total: savingsPts + marginPts + balancePts,
+    total: savingsPts + fixedPts + surplusPts + balancePts,
     savingsRate: savingsPts,
-    netMargin: marginPts,
+    fixedRatio: fixedPts,
+    surplus: surplusPts,
     endingBalance: balancePts,
     savingsRatePct,
-    netMarginPct,
+    fixedRatioPct,
+    net,
     endingBalanceKr,
+    income,
+    netMargin: surplusPts,
+    netMarginPct,
   };
 }
 
 export function lowestHealthFactors(score: HealthScore): HealthFactor[] {
-  const ranked: { key: HealthFactor; ratio: number }[] = [
-    { key: 'savingsRate', ratio: score.savingsRate / HEALTH_CAPS.savingsRate },
-    { key: 'netMargin', ratio: score.netMargin / HEALTH_CAPS.netMargin },
-    { key: 'endingBalance', ratio: score.endingBalance / HEALTH_CAPS.endingBalance },
-  ].sort((a, b) => a.ratio - b.ratio);
-
+  const ranked = (Object.keys(HEALTH_CAPS) as HealthFactor[])
+    .map((key) => ({ key, ratio: score[key] / HEALTH_CAPS[key] }))
+    .sort((a, b) => a.ratio - b.ratio);
   const weak = ranked.filter((f) => f.ratio < 1).slice(0, 2);
   return (weak.length > 0 ? weak : ranked.slice(0, 1)).map((f) => f.key);
 }
 
+export function krToNextSavingsBand(score: HealthScore): number {
+  const income = score.income;
+  const current = Math.round(score.savingsRatePct * income);
+  if (income <= 0 || score.savingsRate >= HEALTH_CAPS.savingsRate) return 0;
+  const targetPct = score.savingsRate >= 20 ? 0.2 : score.savingsRate >= 10 ? 0.1 : 0.05;
+  return Math.max(0, Math.ceil(income * targetPct - current));
+}
+
+export function krToNextFixedBand(score: HealthScore): number {
+  const income = score.income;
+  const current = Math.round(score.fixedRatioPct * income);
+  if (income <= 0 || score.fixedRatio >= HEALTH_CAPS.fixedRatio) return 0;
+  const targetPct = score.fixedRatio >= 20 ? 0.5 : score.fixedRatio >= 10 ? 0.65 : 0.75;
+  return Math.max(0, Math.ceil(current - income * targetPct));
+}
+
+export function krToPositiveNet(score: HealthScore): number {
+  if (score.surplus >= HEALTH_CAPS.surplus) return 0;
+  if (score.net < 0) return Math.abs(score.net);
+  return 1;
+}
+
+export function krToPaydayBuffer(score: HealthScore): number {
+  if (score.endingBalance >= HEALTH_CAPS.endingBalance) return 0;
+  const floor = score.income > 0 ? Math.floor(score.income * 0.1) + 1 : 1;
+  if (score.endingBalance >= 8) return Math.max(0, floor - score.endingBalanceKr);
+  return Math.max(1, floor - score.endingBalanceKr);
+}
+
+export interface HealthNextMove {
+  factor: HealthFactor | null;
+  amountKr: number;
+  nextTier: HealthTier | null;
+  pointsToNext: number;
+}
+
+export function healthNextMove(score: HealthScore): HealthNextMove {
+  const next = nextHealthTier(score.total);
+  const pointsToNext = next ? Math.max(0, next.min - score.total) : 0;
+  if (!next) {
+    return { factor: null, amountKr: 0, nextTier: null, pointsToNext: 0 };
+  }
+  const factor = lowestHealthFactors(score)[0] ?? null;
+  const amountKr =
+    factor === 'savingsRate' ? krToNextSavingsBand(score) :
+    factor === 'fixedRatio' ? krToNextFixedBand(score) :
+    factor === 'surplus' ? krToPositiveNet(score) :
+    factor === 'endingBalance' ? krToPaydayBuffer(score) : 0;
+  return { factor, amountKr, nextTier: next, pointsToNext };
+}
+
 export function healthTips(score: HealthScore): string[] {
+  const move = healthNextMove(score);
+  if (!move.nextTier) {
+    return ['Alla delar är i topp den här månaden. Fortsätt med samma rutin.'];
+  }
   const tips: Record<HealthFactor, string> = {
     savingsRate:
       'Sikta på att spara minst 20 % av inkomsten. Höj målinriktat sparande eller sänk rörliga utgifter.',
-    netMargin:
-      'Nettomarginalen efter levnadskostnader bör vara minst 15 %. Se över fasta och rörliga kostnader.',
+    fixedRatio:
+      'Håll fasta kostnader på högst 50 % av inkomsten. Se över hyra, abonnemang och lån.',
+    surplus:
+      'Månadsresultatet bör vara positivt efter utgifter och sparande. Justera poster så att netto går över noll.',
     endingBalance:
-      'Fyll i ett positivt saldo sista dagen innan lön. Det visar att lönekontot inte är tomt när nästa lön kommer.',
+      'Sikta på saldo före lön över 10 % av inkomsten — utrymme tills nästa löning.',
   };
-  if (score.total === 100) {
-    return ['Alla tre delarna är i topp den här månaden. Fortsätt med samma rutin.'];
-  }
   return lowestHealthFactors(score).map((key) => tips[key]);
 }
 
-function scaledPoints(ratio: number, fullAt: number, max: number): number {
-  if (ratio <= 0 || fullAt <= 0) return 0;
-  return Math.round(Math.min(max, (ratio / fullAt) * max));
-}
-
-export function scoreColor(value: number): string {
-  if (value >= 70) return 'emerald';
-  if (value >= 40) return 'amber';
-  return 'rose';
+export function scoreColor(value: number): HealthTone {
+  return healthTier(value).tone;
 }

@@ -58,7 +58,6 @@ export default function MarketingLayout({
             <MkLink href={PRICE_PATH} ariaCurrent={route === 'price' ? 'page' : undefined}>Beta</MkLink>
             <MkLink href={HOME_PATH} ariaCurrent={route === 'home' ? 'page' : undefined}>Startsida</MkLink>
           </nav>
-          <span className="footer-mark">Equilibrium</span>
         </div>
       </footer>
     </div>

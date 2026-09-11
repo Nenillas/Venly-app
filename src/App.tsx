@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Wallet, LineChart, CheckSquare, Lightbulb, Eye, EyeOff } from 'lucide-react';
+import { Wallet, LineChart, CheckSquare, HeartPulse, Eye, EyeOff } from 'lucide-react';
 import FeedbackModal, { BetaBadge, FeedbackButton } from '@/components/FeedbackModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useFinance } from '@/hooks/useFinance';
@@ -37,7 +37,7 @@ const TABS: { id: Tab; label: string; icon: typeof Wallet }[] = [
   { id: 'monthly', label: 'Månadsöversikt', icon: Wallet },
   { id: 'payments', label: 'Betalningar', icon: CheckSquare },
   { id: 'analytics', label: 'Historik & Hälsa', icon: LineChart },
-  { id: 'insight', label: 'AI-insikt', icon: Lightbulb },
+  { id: 'insight', label: 'Hälsobetyg', icon: HeartPulse },
 ];
 
 function App() {
