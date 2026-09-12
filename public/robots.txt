@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /sa-funkar-det
+Allow: /pris
+Allow: /guider/gora-manadsbudget
+
+Disallow: /app
+Disallow: /app/
+Disallow: /login
+Disallow: /auth
+Disallow: /auth/
+Disallow: /reset-password
+
+Sitemap: https://www.venly.se/sitemap.xml

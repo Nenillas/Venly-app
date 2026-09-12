@@ -1,14 +1,8 @@
-import { useEffect } from 'react';
 import MarketingLayout from './MarketingLayout';
 import MkLink, { HeroOrbs, PriceLine } from './MkLink';
-import { setPageMeta } from '@/lib/documentMeta';
 import { SIGNUP_PATH, APP_PATH } from '@/lib/sitePath';
 
 export default function LandingPage({ loggedIn }: { loggedIn: boolean }) {
-  useEffect(() => {
-    setPageMeta('Venly — Planera lönen innan månaden börjar');
-  }, []);
-
   const cta = loggedIn ? APP_PATH : SIGNUP_PATH;
 
   return (
@@ -181,7 +175,6 @@ export default function LandingPage({ loggedIn }: { loggedIn: boolean }) {
           <h2>Din nästa lön förtjänar en plan.</h2>
           <div className="hero-cta">
             <MkLink className="btn btn-primary btn-lg" href={cta}>Börja planera gratis</MkLink>
-            <PriceLine />
           </div>
         </div>
       </section>

@@ -1,17 +1,8 @@
-import { useEffect } from 'react';
 import MarketingLayout from './MarketingLayout';
 import MkLink, { HeroOrbs, PriceLine } from './MkLink';
-import { setPageMeta } from '@/lib/documentMeta';
 import { APP_PATH, HOME_PATH, HOW_PATH, PRICE_PATH, SIGNUP_PATH } from '@/lib/sitePath';
 
 export default function GuidePage({ loggedIn }: { loggedIn: boolean }) {
-  useEffect(() => {
-    setPageMeta(
-      'Gör en månadsbudget som håller | Venly Guide',
-      'Gör en månadsbudget som håller: realistiska poster, buffert och överskott före löning. Proaktiv metod — gratis under beta · ingen bankkoppling.',
-    );
-  }, []);
-
   const cta = loggedIn ? APP_PATH : SIGNUP_PATH;
 
   return (
@@ -104,7 +95,6 @@ export default function GuidePage({ loggedIn }: { loggedIn: boolean }) {
             </div>
             <div className="bridge-cta">
               <MkLink className="btn btn-primary btn-lg" href={cta}>Börja planera gratis</MkLink>
-              <PriceLine />
             </div>
           </article>
         </div>
@@ -116,7 +106,6 @@ export default function GuidePage({ loggedIn }: { loggedIn: boolean }) {
           <p className="lede">Sätt månadens spelregler på ~2 minuter. Sedan vet du.</p>
           <div className="hero-cta">
             <MkLink className="btn btn-primary btn-lg" href={cta}>Kom igång gratis</MkLink>
-            <PriceLine />
           </div>
         </div>
       </section>

@@ -1,17 +1,8 @@
-import { useEffect } from 'react';
 import MarketingLayout from './MarketingLayout';
 import MkLink, { CheckIcon, HeroOrbs, PriceLine } from './MkLink';
-import { setPageMeta } from '@/lib/documentMeta';
 import { APP_PATH, SIGNUP_PATH } from '@/lib/sitePath';
 
 export default function PricingPage({ loggedIn }: { loggedIn: boolean }) {
-  useEffect(() => {
-    setPageMeta(
-      'Beta — Venly gratis under betan',
-      'Venly Open-Beta: gratis under betan. Planera lönen innan månaden börjar — utan bankkoppling.',
-    );
-  }, []);
-
   const cta = loggedIn ? APP_PATH : SIGNUP_PATH;
 
   return (
@@ -37,7 +28,7 @@ export default function PricingPage({ loggedIn }: { loggedIn: boolean }) {
               <span className="price-numeral">Gratis</span>
             </div>
             <p className="price-note">Under beta — ingen kostnad</p>
-            <p className="price-card-lede">Allt du behöver för proaktiv löneplanering. Under betan utan kostnad; prissättning kan tillkomma senare.</p>
+            <p className="price-card-lede">Allt du behöver för proaktiv löneplanering. Open Beta är gratis — ingen bankkoppling.</p>
             <ul className="checklist">
               <li><CheckIcon /><span>Månadsplan på ~2 minuter före löning</span></li>
               <li><CheckIcon /><span>Inkomster, fasta och rörliga utgifter + saldo som underlag</span></li>
@@ -48,7 +39,6 @@ export default function PricingPage({ loggedIn }: { loggedIn: boolean }) {
             </ul>
             <div className="price-card-cta">
               <MkLink className="btn btn-primary btn-lg" href={cta}>Börja planera gratis →</MkLink>
-              <PriceLine />
             </div>
           </article>
         </div>
@@ -107,7 +97,6 @@ export default function PricingPage({ loggedIn }: { loggedIn: boolean }) {
           <p className="lede">Två minuter före löning. Sedan vet du vad som ska hända med pengarna.</p>
           <div className="hero-cta">
             <MkLink className="btn btn-primary btn-lg" href={cta}>Kom igång gratis</MkLink>
-            <PriceLine />
           </div>
         </div>
       </section>

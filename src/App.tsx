@@ -24,6 +24,7 @@ import ResetPassword from '@/pages/ResetPassword';
 import UserMenu from '@/components/auth/UserMenu';
 import { usePaydayDate } from '@/hooks/usePaydayDate';
 import { usePrivacyMode } from '@/hooks/usePrivacyMode';
+import { applySeoForId } from '@/lib/documentMeta';
 import Logo from '@/components/Logo';
 import LandingPage from '@/components/marketing/LandingPage';
 import HowItWorksPage from '@/components/marketing/HowItWorksPage';
@@ -170,6 +171,10 @@ function FinanceApp({
   setFeedbackOpen: (open: boolean) => void;
   signOut: () => void;
 }) {
+  useEffect(() => {
+    applySeoForId('app');
+  }, []);
+
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden">
       <header className="sticky top-0 z-30 isolate border-b border-white/[0.06] bg-ink-950/80 backdrop-blur-xl">

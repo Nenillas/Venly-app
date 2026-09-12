@@ -1,17 +1,8 @@
-import { useEffect } from 'react';
 import MarketingLayout from './MarketingLayout';
 import MkLink, { CheckIcon, HeroOrbs, PriceLine } from './MkLink';
-import { setPageMeta } from '@/lib/documentMeta';
 import { APP_PATH, SIGNUP_PATH } from '@/lib/sitePath';
 
 export default function HowItWorksPage({ loggedIn }: { loggedIn: boolean }) {
-  useEffect(() => {
-    setPageMeta(
-      'Så funkar Venly — din månadsplan på ~2 minuter',
-      'Så funkar Venly: två minuter före löning, AI som räknar levnadskostnader och föreslår överskott. Ingen bankkoppling. Gratis under beta. Du styr.',
-    );
-  }, []);
-
   const cta = loggedIn ? APP_PATH : SIGNUP_PATH;
 
   return (
@@ -126,7 +117,6 @@ export default function HowItWorksPage({ loggedIn }: { loggedIn: boolean }) {
                   <span className="li-body"><strong>Gratis under beta</strong>.</span>
                 </li>
               </ul>
-              <PriceLine />
             </div>
             <div className="info-block">
               <h2>Resultatet</h2>
@@ -139,7 +129,6 @@ export default function HowItWorksPage({ loggedIn }: { loggedIn: boolean }) {
               <p className="result-close"><strong>Smartare kontroll över din ekonomi</strong> — på ungefär två minuter.</p>
               <div className="info-cta">
                 <MkLink className="btn btn-primary btn-lg" href={cta}>Börja planera gratis</MkLink>
-                <PriceLine />
               </div>
             </div>
           </div>
@@ -152,7 +141,6 @@ export default function HowItWorksPage({ loggedIn }: { loggedIn: boolean }) {
           <p className="lede">Två minuter före löning. Sedan vet du.</p>
           <div className="hero-cta">
             <MkLink className="btn btn-primary btn-lg" href={cta}>Kom igång gratis</MkLink>
-            <PriceLine />
           </div>
         </div>
       </section>

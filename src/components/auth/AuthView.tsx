@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 import { readLoginAuthError, readLoginAuthInfo } from '@/lib/authRedirect';
 import { requestPasswordReset, signInWithMagicLink, signInWithPassword, signUpWithPassword } from '@/lib/supabase/auth';
+import { applySeoForId } from '@/lib/documentMeta';
 import Logo from '@/components/Logo';
 import FeedbackModal, { BetaBadge, FeedbackButton } from '@/components/FeedbackModal';
 import MkLink from '@/components/marketing/MkLink';
@@ -41,6 +42,10 @@ export default function AuthView() {
   const [info, setInfo] = useState<string | null>(() => readLoginAuthInfo());
   const [busy, setBusy] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+  useEffect(() => {
+    applySeoForId('login');
+  }, []);
 
   useEffect(() => {
     if (!readLoginAuthError() && !readLoginAuthInfo()) return;

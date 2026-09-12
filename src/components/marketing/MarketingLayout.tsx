@@ -1,10 +1,18 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import './marketing.css';
 import MkLink from './MkLink';
 import { APP_PATH, GUIDE_PATH, HOME_PATH, HOW_PATH, LOGIN_PATH, PRICE_PATH, SIGNUP_PATH } from '@/lib/sitePath';
 import type { MarketingRoute } from '@/lib/sitePath';
+import { applySeoForId } from '@/lib/documentMeta';
+import type { SeoPageId } from '@/lib/seo';
 
 const LOGO = '/venly-logo.svg';
+const ROUTE_SEO: Record<MarketingRoute, SeoPageId> = {
+  home: 'home',
+  how: 'how',
+  price: 'price',
+  guide: 'guide',
+};
 
 export default function MarketingLayout({
   route,
@@ -20,6 +28,10 @@ export default function MarketingLayout({
   const startHref = loggedIn ? APP_PATH : SIGNUP_PATH;
   const startLabel = loggedIn ? 'Öppna appen' : 'Kom igång';
   const loginHref = loggedIn ? APP_PATH : LOGIN_PATH;
+
+  useEffect(() => {
+    applySeoForId(ROUTE_SEO[route]);
+  }, [route]);
 
   return (
     <div className={`mk ${variant}`.trim()}>
